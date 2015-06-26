@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string-array name="academy">
+        <item>通信与信息工程学院</item>
+        <item>计算机科学与技术学院</item>
+        <item>自动化学院</item>
+        <item>光电学院/国际半导体学院</item>
+        <item>生物信息学院</item>
+        <item>经济管理学院</item>
+        <item>数理学院</item>
+        <item>法学院</item>
+        <item>传媒艺术学院</item>
+        <item>外国语学院</item>
+        <item>国际学院</item>
+        <item>体育学院</item>
+        <item>软件工程学院</item>
+    </string-array>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_example">Example action</string>
+</resources>
