@@ -1,0 +1,4781 @@
+Index: app/src/main/res/menu/menu_show.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/menu_show.xml	(revision )
++++ app/src/main/res/menu/menu_show.xml	(revision )
+@@ -0,0 +1,7 @@
++<menu xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    tools:context="com.example.jim.myapplication.view.ShowActivity">
++    <item android:id="@+id/action_settings" android:title="@string/action_settings"
++        android:orderInCategory="100" app:showAsAction="never" />
++</menu>
+Index: app/src/main/java/com/example/jim/myapplication/view/MyOrganizationFragment.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/MyOrganizationFragment.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/MyOrganizationFragment.java	(revision )
+@@ -0,0 +1,114 @@
++package com.example.jim.myapplication.view;
++
++import android.app.Activity;
++import android.content.DialogInterface;
++import android.os.Bundle;
++import android.support.v4.app.Fragment;
++import android.support.v7.app.AlertDialog;
++import android.support.v7.widget.LinearLayoutManager;
++import android.support.v7.widget.RecyclerView;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.Button;
++import android.widget.EditText;
++
++import com.example.jim.myapplication.Adapter.OrgAdapter;
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.Organization;
++import com.example.jim.myapplication.utils.BmobUtil.AddInCallBack;
++import com.example.jim.myapplication.utils.BmobUtil.BmobTableUtil;
++
++import java.util.List;
++
++import cn.bmob.v3.BmobQuery;
++import cn.bmob.v3.listener.FindListener;
++
++
++/**
++ * Created by jim on 2015/8/21.
++ */
++public class MyOrganizationFragment extends Fragment implements View.OnClickListener {
++    private static MyOrganizationFragment mof;
++    private RecyclerView mRecyclerView;
++    private Button mButton;
++    private OrgAdapter orgAdapter;
++
++    public static MyOrganizationFragment getInstance() {
++        if (mof == null) {
++            mof = new MyOrganizationFragment();
++        }
++        return mof;
++    }
++
++    @Override
++    public void onAttach(Activity activity) {
++        super.onAttach(activity);
++    }
++
++    @Override
++    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
++        View view = inflater.inflate(R.layout.fragment_myorganise, container, false);
++        initWidget(view);
++        return view;
++    }
++
++    BmobQuery<Organization> query = new BmobQuery<Organization>();
++
++    void getBmobQuery(){
++        query.addWhereEqualTo("user", MainActivity.user);
++        query.findObjects(getActivity(), new FindListener<Organization>() {
++            @Override
++            public void onSuccess(List<Organization> list) {
++                orgAdapter.setData(list);
++                orgAdapter.notifyDataSetChanged();
++            }
++
++            @Override
++            public void onError(int i, String s) {
++
++            }
++        });
++    }
++
++    void initWidget(View view) {
++        mRecyclerView = (RecyclerView) view.findViewById(R.id.my_organise_recycler);
++        orgAdapter = new OrgAdapter(getActivity(), null);
++        mButton = (Button) view.findViewById(R.id.create_text);
++        mButton.setOnClickListener(this);
++        mRecyclerView.setAdapter(orgAdapter);
++        mRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
++        getBmobQuery();
++    }
++
++    @Override
++    public void onClick(View v) {
++        switch (v.getId()) {
++            case R.id.create_text:
++                View layout = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_organise, null);
++                final EditText et = (EditText) layout.findViewById(R.id.etname);
++                final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
++                builder.setTitle("社团创建")
++                        .setView(layout)
++                        .setPositiveButton("确定", new DialogInterface.OnClickListener() {
++                            @Override
++                            public void onClick(DialogInterface dialog, int which) {
++                                BmobTableUtil.insertObj(getActivity(), new Organization(0, et.getText().toString(), MainActivity.user, false), new AddInCallBack() {
++                                    @Override
++                                    public void doInSuccess() {
++                                       getBmobQuery();
++                                    }
++
++                                    @Override
++                                    public void doInFail() {
++
++                                    }
++                                });
++                            }
++                        }).setNegativeButton("取消", null)
++                        .show();
++                break;
++        }
++    }
++
++}
+Index: app/src/main/java/com/example/jim/myapplication/view/AllOrgViewHolder.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/AllOrgViewHolder.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/AllOrgViewHolder.java	(revision )
+@@ -0,0 +1,78 @@
++package com.example.jim.myapplication.view;
++
++import android.content.Intent;
++import android.os.Bundle;
++import android.support.v7.widget.CardView;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.Organization;
++import com.example.jim.myapplication.utils.LogUtil;
++import com.jude.easyrecyclerview.adapter.BaseViewHolder;
++
++import cn.bmob.v3.listener.UpdateListener;
++
++/**
++ * Created by jim on 2015/8/25.
++ */
++public class AllOrgViewHolder extends BaseViewHolder<Organization>{
++
++    ImageView image;
++    TextView orgName;
++    TextView baseIntro;
++    CardView cardView;
++
++    ViewGroup parent;
++
++    public AllOrgViewHolder(ViewGroup viewGroup) {
++        super(viewGroup, R.layout.item_organise);
++        parent = viewGroup;
++        image = (ImageView) itemView.findViewById(R.id.org_pic);
++        orgName = (TextView) itemView.findViewById(R.id.org_name);
++        baseIntro = (TextView) itemView.findViewById(R.id.org_introduce);
++        cardView = (CardView) itemView.findViewById(R.id.cardView);
++    }
++
++    @Override
++    public void setData(Organization data) {
++        super.setData(data);
++        LogUtil.i("data", data.toString());
++        data.getOrgPic().loadImage(parent.getContext(), image);
++        orgName.setText(data.getOrgName());
++        baseIntro.setText(data.getBaseIntro());
++        setClicked(data);
++    }
++
++    private void setClicked(final Organization data) {
++        cardView.setOnClickListener(new View.OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent(parent.getContext(), OrgInfoActivy.class);
++                Bundle bundle = new Bundle();
++                bundle.putSerializable("org", data);
++                intent.putExtras(bundle);
++                parent.getContext().startActivity(intent);
++                upLoadCount(data.getClickCount(), data.getObjectId());
++            }
++        });
++    }
++
++    private void upLoadCount(int clickCount, String Id) {
++        Organization org = new Organization();
++        org.setClickCount(clickCount+1);
++        org.update(parent.getContext(), Id, new UpdateListener() {
++            @Override
++            public void onSuccess() {
++
++            }
++
++            @Override
++            public void onFailure(int i, String s) {
++
++            }
++        });
++    }
++}
+Index: app/src/main/res/anim/photo_dialog_in_anim.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/anim/photo_dialog_in_anim.xml	(revision )
++++ app/src/main/res/anim/photo_dialog_in_anim.xml	(revision )
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set xmlns:android="http://schemas.android.com/apk/res/android" >
++
++    <translate
++        android:duration="500"
++        android:fromXDelta="0"
++        android:fromYDelta="1000"
++        android:toXDelta="0"
++        android:toYDelta="0" />
++
++</set>
+\ No newline at end of file
+Index: app/src/main/res/layout/login.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/login.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/layout/login.xml	(revision )
+@@ -1,20 +1,37 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical" android:layout_width="match_parent"
+-    android:layout_height="match_parent">
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:orientation="vertical">
++
+     <EditText
+         android:id="@+id/user_name"
+         android:layout_width="match_parent"
+-        android:hint="输入你的名字"
+-        android:layout_height="wrap_content" />
++        android:layout_height="wrap_content"
++        android:hint="输入你的名字" />
++
+     <EditText
+         android:id="@+id/password"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:inputType="textPassword"
+-        android:hint="输入密码"/>
++        android:hint="输入密码"
++        android:inputType="textPassword" />
++
+     <Button
+         android:id="@+id/login"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content" />
++
++    <LinearLayout
++        android:orientation="horizontal"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content">
++
++        <TextView
++            android:id="@+id/forget"
++            android:textColor="@color/DeepPurple"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:text="忘记密码？" />
++    </LinearLayout>
+ </LinearLayout>
+\ No newline at end of file
+Index: app/src/main/res/drawable/photo_cancel_normal.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_cancel_normal.xml	(revision )
++++ app/src/main/res/drawable/photo_cancel_normal.xml	(revision )
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle" >
++
++    <gradient
++        android:angle="90"
++        android:endColor="#EBEBEB"
++        android:startColor="#EBEBEB" />
++    <!--
++    <stroke
++        android:dashGap="2dp"
++        android:dashWidth="2dp"
++        android:width="2dp"
++        android:color="#FF00ff00" >
++    </stroke>
++		描边
++
++
++
++    -->
++
++    <corners
++        android:bottomLeftRadius="5dp"
++        android:bottomRightRadius="5dp"
++        android:topLeftRadius="5dp"
++        android:topRightRadius="5dp" />
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/res/layout/activity_org_info_activy.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/activity_org_info_activy.xml	(revision )
++++ app/src/main/res/layout/activity_org_info_activy.xml	(revision )
+@@ -0,0 +1,37 @@
++<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    tools:context="com.example.jim.myapplication.view.OrgInfoActivy">
++
++    <com.jude.rollviewpager.RollPagerView
++        android:id="@+id/roll_pager"
++        android:layout_width="match_parent"
++        android:layout_height="200dp"
++        app:rollviewpager_play_delay="3000"
++        app:rollviewpager_hint_mode="point"
++        />
++
++    <TextView
++        android:id="@+id/text_view"
++        android:textColor="@color/DeepPurple900"
++        android:textSize="30dp"
++        android:layout_below="@+id/roll_pager"
++        android:text="社团介绍："
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content" />
++    <ScrollView
++        android:layout_below="@+id/text_view"
++        android:scrollbars="vertical"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content">
++        <TextView
++            android:textColor="@color/pink"
++            android:textSize="20dp"
++            android:id="@+id/speci_intro"
++            android:layout_width="match_parent"
++            android:layout_height="wrap_content" />
++    </ScrollView>
++
++</RelativeLayout>
+Index: app/src/main/java/com/example/jim/myapplication/Adapter/OrgAdapter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/Adapter/OrgAdapter.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/Adapter/OrgAdapter.java	(revision )
+@@ -0,0 +1,96 @@
++package com.example.jim.myapplication.Adapter;
++
++import android.app.Activity;
++import android.content.Intent;
++import android.os.Bundle;
++import android.support.v7.app.AlertDialog;
++import android.support.v7.widget.CardView;
++import android.support.v7.widget.RecyclerView;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.Organization;
++import com.example.jim.myapplication.utils.LogUtil;
++import com.example.jim.myapplication.view.MyOrgActivity;
++
++import java.util.List;
++
++/**
++ * Created by jim on 2015/8/22.
++ */
++public class OrgAdapter extends RecyclerView.Adapter<OrgAdapter.ViewHolder> {
++    private Activity activity;
++    private List<Organization> orgs;
++
++    public OrgAdapter(Activity activity, List<Organization> orgs) {
++        this.activity = activity;
++        this.orgs = orgs;
++    }
++
++    public void setData(List<Organization> orgs){
++        this.orgs = orgs;
++    }
++
++    @Override
++    public OrgAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
++        View view = LayoutInflater.from(activity).inflate(R.layout.item_organise, parent, false);
++        return new ViewHolder(view);
++    }
++
++    @Override
++    public void onBindViewHolder(ViewHolder holder, int position) {
++        holder.orgName.setText(orgs.get(position).getOrgName());
++        if (orgs.get(position).getBaseIntro() != null){
++            holder.orgIntro.setText(orgs.get(position).getBaseIntro());
++        }
++        if (orgs.get(position).getOrgPic() != null){
++            orgs.get(position).getOrgPic().loadImage(activity, holder.orgPic);
++
++        }
++        setClickEvent(position, holder.cardView);
++    }
++
++    @Override
++    public int getItemCount() {
++        return orgs == null ? 0 : orgs.size();
++    }
++
++    public static class ViewHolder extends RecyclerView.ViewHolder {
++        TextView orgName;
++        ImageView orgPic;
++        TextView orgIntro;
++        CardView cardView;
++        public ViewHolder(View itemView) {
++            super(itemView);
++            orgIntro = (TextView) itemView.findViewById(R.id.org_introduce);
++            orgPic = (ImageView) itemView.findViewById(R.id.org_pic);
++            orgName = (TextView) itemView.findViewById(R.id.org_name);
++            cardView = (CardView) itemView.findViewById(R.id.cardView);
++        }
++    }
++
++    void setClickEvent(final int position, CardView cardView){
++        cardView.setOnClickListener(new View.OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Boolean isPass = orgs.get(position).getPassExam();
++                if (isPass == false){
++                    new AlertDialog.Builder(activity).setTitle("抱歉你未通过审核")
++                            .setMessage("请将你要创建的社团信息发送到邮箱603557667@qq.com,我们将会在收到后的24小时内处理")
++                            .setPositiveButton("确定", null)
++                            .show();
++                }else{
++                    Intent intent = new Intent(activity, MyOrgActivity.class);
++                    Bundle bundle = new Bundle();
++                    bundle.putSerializable("MyOrg", orgs.get(position));
++                    intent.putExtras(bundle);
++                    activity.startActivity(intent);
++                }
++            }
++        });
++    }
++}
+Index: app/src/main/res/layout/item_organise.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/item_organise.xml	(revision )
++++ app/src/main/res/layout/item_organise.xml	(revision )
+@@ -0,0 +1,46 @@
++<?xml version="1.0" encoding="utf-8"?>
++<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:card="http://schemas.android.com/apk/res-auto"
++    xmlns:tool="http://schemas.android.com/tools"
++    card:cardCornerRadius="10dp"
++    card:cardElevation="10dp"
++    android:theme="@style/nLiveoDrawer"
++    android:id="@+id/cardView"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent">
++
++    <RelativeLayout
++        android:layout_width="match_parent"
++        android:layout_height="100dp"
++        android:padding="5dp">
++
++        <ImageView
++            android:id="@+id/org_pic"
++            android:layout_width="50dp"
++            android:layout_height="50dp"
++            android:layout_centerVertical="true"
++            android:layout_marginLeft="16dp" />
++
++        <TextView
++            android:id="@+id/org_name"
++            style="@style/TextAppearance.AppCompat.Headline"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_marginLeft="70dp"
++            android:layout_toRightOf="@+id/head_pic"
++            tool:text="hello" />
++
++        <TextView
++            android:id="@+id/org_introduce"
++            style="@style/TextAppearance.AppCompat.Headline"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            android:layout_below="@+id/org_name"
++            android:layout_marginLeft="70dp"
++            android:layout_toRightOf="@+id/head_pic"
++            tool:text="hello" />
++
++
++    </RelativeLayout>
++
++</android.support.v7.widget.CardView>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/NavigationDrawerFragment.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/NavigationDrawerFragment.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/NavigationDrawerFragment.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
+@@ -1,282 +0,0 @@
+-package com.example.jim.myapplication;
+-
+-import android.support.v7.app.ActionBarActivity;
+-import android.app.Activity;
+-import android.support.v7.app.ActionBar;
+-import android.support.v4.app.Fragment;
+-import android.support.v4.app.ActionBarDrawerToggle;
+-import android.support.v4.view.GravityCompat;
+-import android.support.v4.widget.DrawerLayout;
+-import android.content.SharedPreferences;
+-import android.content.res.Configuration;
+-import android.os.Bundle;
+-import android.preference.PreferenceManager;
+-import android.view.LayoutInflater;
+-import android.view.Menu;
+-import android.view.MenuInflater;
+-import android.view.MenuItem;
+-import android.view.View;
+-import android.view.ViewGroup;
+-import android.widget.AdapterView;
+-import android.widget.ArrayAdapter;
+-import android.widget.ListView;
+-import android.widget.Toast;
+-
+-/**
+- * Fragment used for managing interactions for and presentation of a navigation drawer.
+- * See the <a href="https://developer.android.com/design/patterns/navigation-drawer.html#Interaction">
+- * design guidelines</a> for a complete explanation of the behaviors implemented here.
+- */
+-public class NavigationDrawerFragment extends Fragment {
+-
+-    /**
+-     * Remember the position of the selected item.
+-     */
+-    private static final String STATE_SELECTED_POSITION = "selected_navigation_drawer_position";
+-
+-    /**
+-     * Per the design guidelines, you should show the drawer on launch until the user manually
+-     * expands it. This shared preference tracks this.
+-     */
+-    private static final String PREF_USER_LEARNED_DRAWER = "navigation_drawer_learned";
+-
+-    /**
+-     * A pointer to the current callbacks instance (the Activity).
+-     */
+-    private NavigationDrawerCallbacks mCallbacks;
+-
+-    /**
+-     * Helper component that ties the action bar to the navigation drawer.
+-     */
+-    private ActionBarDrawerToggle mDrawerToggle;
+-
+-    private DrawerLayout mDrawerLayout;
+-    private ListView mDrawerListView;
+-    private View mFragmentContainerView;
+-
+-    private int mCurrentSelectedPosition = 0;
+-    private boolean mFromSavedInstanceState;
+-    private boolean mUserLearnedDrawer;
+-
+-    public NavigationDrawerFragment() {
+-    }
+-
+-    @Override
+-    public void onCreate(Bundle savedInstanceState) {
+-        super.onCreate(savedInstanceState);
+-
+-        // Read in the flag indicating whether or not the user has demonstrated awareness of the
+-        // drawer. See PREF_USER_LEARNED_DRAWER for details.
+-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+-        mUserLearnedDrawer = sp.getBoolean(PREF_USER_LEARNED_DRAWER, false);
+-
+-        if (savedInstanceState != null) {
+-            mCurrentSelectedPosition = savedInstanceState.getInt(STATE_SELECTED_POSITION);
+-            mFromSavedInstanceState = true;
+-        }
+-
+-        // Select either the default item (0) or the last selected item.
+-        selectItem(mCurrentSelectedPosition);
+-    }
+-
+-    @Override
+-    public void onActivityCreated(Bundle savedInstanceState) {
+-        super.onActivityCreated(savedInstanceState);
+-        // Indicate that this fragment would like to influence the set of actions in the action bar.
+-        setHasOptionsMenu(true);
+-    }
+-
+-    @Override
+-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+-                             Bundle savedInstanceState) {
+-        mDrawerListView = (ListView) inflater.inflate(
+-                R.layout.fragment_navigation_drawer, container, false);
+-        mDrawerListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+-            @Override
+-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+-                selectItem(position);
+-            }
+-        });
+-        mDrawerListView.setAdapter(new ArrayAdapter<String>(
+-                getActionBar().getThemedContext(),
+-                android.R.layout.simple_list_item_activated_1,
+-                android.R.id.text1,
+-                new String[]{
+-                        getString(R.string.title_section1),
+-                        getString(R.string.title_section2),
+-                        getString(R.string.title_section3),
+-                }));
+-        mDrawerListView.setItemChecked(mCurrentSelectedPosition, true);
+-        return mDrawerListView;
+-    }
+-
+-    public boolean isDrawerOpen() {
+-        return mDrawerLayout != null && mDrawerLayout.isDrawerOpen(mFragmentContainerView);
+-    }
+-
+-    /**
+-     * Users of this fragment must call this method to set up the navigation drawer interactions.
+-     *
+-     * @param fragmentId   The android:id of this fragment in its activity's layout.
+-     * @param drawerLayout The DrawerLayout containing this fragment's UI.
+-     */
+-    public void setUp(int fragmentId, DrawerLayout drawerLayout) {
+-        mFragmentContainerView = getActivity().findViewById(fragmentId);
+-        mDrawerLayout = drawerLayout;
+-
+-        // set a custom shadow that overlays the main content when the drawer opens
+-        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+-        // set up the drawer's list view with items and click listener
+-
+-        ActionBar actionBar = getActionBar();
+-        actionBar.setDisplayHomeAsUpEnabled(true);
+-        actionBar.setHomeButtonEnabled(true);
+-
+-        // ActionBarDrawerToggle ties together the the proper interactions
+-        // between the navigation drawer and the action bar app icon.
+-        mDrawerToggle = new ActionBarDrawerToggle(
+-                getActivity(),                    /* host Activity */
+-                mDrawerLayout,                    /* DrawerLayout object */
+-                R.drawable.ic_drawer,             /* nav drawer image to replace 'Up' caret */
+-                R.string.navigation_drawer_open,  /* "open drawer" description for accessibility */
+-                R.string.navigation_drawer_close  /* "close drawer" description for accessibility */
+-        ) {
+-            @Override
+-            public void onDrawerClosed(View drawerView) {
+-                super.onDrawerClosed(drawerView);
+-                if (!isAdded()) {
+-                    return;
+-                }
+-
+-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+-            }
+-
+-            @Override
+-            public void onDrawerOpened(View drawerView) {
+-                super.onDrawerOpened(drawerView);
+-                if (!isAdded()) {
+-                    return;
+-                }
+-
+-                if (!mUserLearnedDrawer) {
+-                    // The user manually opened the drawer; store this flag to prevent auto-showing
+-                    // the navigation drawer automatically in the future.
+-                    mUserLearnedDrawer = true;
+-                    SharedPreferences sp = PreferenceManager
+-                            .getDefaultSharedPreferences(getActivity());
+-                    sp.edit().putBoolean(PREF_USER_LEARNED_DRAWER, true).apply();
+-                }
+-
+-                getActivity().supportInvalidateOptionsMenu(); // calls onPrepareOptionsMenu()
+-            }
+-        };
+-
+-        // If the user hasn't 'learned' about the drawer, open it to introduce them to the drawer,
+-        // per the navigation drawer design guidelines.
+-        if (!mUserLearnedDrawer && !mFromSavedInstanceState) {
+-            mDrawerLayout.openDrawer(mFragmentContainerView);
+-        }
+-
+-        // Defer code dependent on restoration of previous instance state.
+-        mDrawerLayout.post(new Runnable() {
+-            @Override
+-            public void run() {
+-                mDrawerToggle.syncState();
+-            }
+-        });
+-
+-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+-    }
+-
+-    private void selectItem(int position) {
+-        mCurrentSelectedPosition = position;
+-        if (mDrawerListView != null) {
+-            mDrawerListView.setItemChecked(position, true);
+-        }
+-        if (mDrawerLayout != null) {
+-            mDrawerLayout.closeDrawer(mFragmentContainerView);
+-        }
+-        if (mCallbacks != null) {
+-            mCallbacks.onNavigationDrawerItemSelected(position);
+-        }
+-    }
+-
+-    @Override
+-    public void onAttach(Activity activity) {
+-        super.onAttach(activity);
+-        try {
+-            mCallbacks = (NavigationDrawerCallbacks) activity;
+-        } catch (ClassCastException e) {
+-            throw new ClassCastException("Activity must implement NavigationDrawerCallbacks.");
+-        }
+-    }
+-
+-    @Override
+-    public void onDetach() {
+-        super.onDetach();
+-        mCallbacks = null;
+-    }
+-
+-    @Override
+-    public void onSaveInstanceState(Bundle outState) {
+-        super.onSaveInstanceState(outState);
+-        outState.putInt(STATE_SELECTED_POSITION, mCurrentSelectedPosition);
+-    }
+-
+-    @Override
+-    public void onConfigurationChanged(Configuration newConfig) {
+-        super.onConfigurationChanged(newConfig);
+-        // Forward the new configuration the drawer toggle component.
+-        mDrawerToggle.onConfigurationChanged(newConfig);
+-    }
+-
+-    @Override
+-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+-        // If the drawer is open, show the global app actions in the action bar. See also
+-        // showGlobalContextActionBar, which controls the top-left area of the action bar.
+-        if (mDrawerLayout != null && isDrawerOpen()) {
+-            inflater.inflate(R.menu.global, menu);
+-            showGlobalContextActionBar();
+-        }
+-        super.onCreateOptionsMenu(menu, inflater);
+-    }
+-
+-    @Override
+-    public boolean onOptionsItemSelected(MenuItem item) {
+-        if (mDrawerToggle.onOptionsItemSelected(item)) {
+-            return true;
+-        }
+-
+-        if (item.getItemId() == R.id.action_example) {
+-            Toast.makeText(getActivity(), "Example action.", Toast.LENGTH_SHORT).show();
+-            return true;
+-        }
+-
+-        return super.onOptionsItemSelected(item);
+-    }
+-
+-    /**
+-     * Per the navigation drawer design guidelines, updates the action bar to show the global app
+-     * 'context', rather than just what's in the current screen.
+-     */
+-    private void showGlobalContextActionBar() {
+-        ActionBar actionBar = getActionBar();
+-        actionBar.setDisplayShowTitleEnabled(true);
+-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+-        actionBar.setTitle(R.string.app_name);
+-    }
+-
+-    private ActionBar getActionBar() {
+-        return ((ActionBarActivity) getActivity()).getSupportActionBar();
+-    }
+-
+-    /**
+-     * Callbacks interface that all activities using this fragment must implement.
+-     */
+-    public static interface NavigationDrawerCallbacks {
+-        /**
+-         * Called when an item in the navigation drawer is selected.
+-         */
+-        void onNavigationDrawerItemSelected(int position);
+-    }
+-}
+Index: MyApplication.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- MyApplication.iml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ MyApplication.iml	(revision )
+@@ -8,7 +8,7 @@
+       </configuration>
+     </facet>
+   </component>
+-  <component name="NewModuleRootManager" inherit-compiler-output="true">
++  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="true">
+     <exclude-output />
+     <content url="file://$MODULE_DIR$">
+       <excludeFolder url="file://$MODULE_DIR$/.gradle" />
+\ No newline at end of file
+Index: app/src/main/res/drawable/photo_camera_normal.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_camera_normal.xml	(revision )
++++ app/src/main/res/drawable/photo_camera_normal.xml	(revision )
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle" >
++
++    <gradient
++        android:angle="90"
++        android:endColor="#EBEBEB"
++        android:startColor="#EBEBEB" />
++    <!--
++    <stroke
++        android:dashGap="2dp"
++        android:dashWidth="2dp"
++        android:width="2dp"
++        android:color="#FF00ff00" >
++    </stroke>
++		描边
++
++
++
++    -->
++
++    <corners
++        android:bottomLeftRadius="5dp"
++        android:bottomRightRadius="5dp"
++        android:topLeftRadius="0dp"
++        android:topRightRadius="0dp" />
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/SplashActivity.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/SplashActivity.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/view/SplashActivity.java	(revision )
+@@ -1,4 +1,4 @@
+-package com.example.jim.myapplication;
++package com.example.jim.myapplication.view;
+ 
+ import android.app.Activity;
+ import android.content.Context;
+@@ -7,6 +7,13 @@
+ import android.os.Handler;
+ import android.os.Message;
+ 
++import com.example.jim.myapplication.Config.App;
++import com.example.jim.myapplication.R;
++
++import cn.bmob.push.BmobPush;
++import cn.bmob.v3.Bmob;
++import cn.bmob.v3.BmobInstallation;
++
+ /**
+  * Created by jim on 2015/6/18.
+  */
+@@ -15,6 +22,12 @@
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_splash);
++
++        Bmob.initialize(this, App.APPLICATION_ID);
++        // 使用推送服务时的初始化操作
++        BmobInstallation.getCurrentInstallation(this).save();
++        // 启动推送服务
++        BmobPush.startWork(this, App.APPLICATION_ID);
+ 
+         boolean mFirst = isFirstEnter(SplashActivity.this,SplashActivity.this.getClass().getName());
+         if(mFirst)
+Index: app/src/main/res/values/strings.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/strings.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/values/strings.xml	(revision )
+@@ -1,5 +1,5 @@
+ <resources>
+-    <string name="app_name">My Application</string>
++    <string name="app_name">某应用</string>
+     <string-array name="academy">
+         <item>通信与信息工程学院</item>
+         <item>计算机科学与技术学院</item>
+@@ -27,4 +27,10 @@
+     <string name="navigation_drawer_close">Close navigation drawer</string>
+ 
+     <string name="action_example">Example action</string>
++    <string name="title_activity_test">TestActivity</string>
++    <string name="title_activity_show">ShowActivity</string>
++    <string name="title_activity_my_org">MyOrgActivity</string>
++    <string name="title_activity_text">TextActivity</string>
++    <string name="title_activity_org_pics">OrgPicsActivity</string>
++    <string name="title_activity_org_info_activy">OrgInfoActivy</string>
+ </resources>
+Index: app/src/main/res/layout/fragment_navigation_drawer.xml
+===================================================================
+--- app/src/main/res/layout/fragment_navigation_drawer.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/layout/fragment_navigation_drawer.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
+@@ -1,12 +0,0 @@
+-<?xml version="1.0" encoding="utf-8"?>
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical" android:layout_width="match_parent"
+-    android:layout_height="match_parent">
+-    <RelativeLayout
+-        android:layout_width="match_parent"
+-        android:layout_height="wrap_content">
+-        <ImageView
+-            android:layout_width="60dp"
+-            android:layout_height="60dp" />
+-    </RelativeLayout>
+-</LinearLayout>
+Index: app/src/main/java/com/example/jim/myapplication/MyClassFragment.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/MyClassFragment.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/MyClassFragment.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
+@@ -1,18 +0,0 @@
+-package com.example.jim.myapplication;
+-
+-import android.os.Bundle;
+-import android.support.v4.app.Fragment;
+-import android.view.LayoutInflater;
+-import android.view.View;
+-import android.view.ViewGroup;
+-
+-/**
+- * Created by jim on 2015/6/19.
+- */
+-public class MyClassFragment extends Fragment{
+-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+-                             Bundle savedInstanceState){
+-        View view = inflater.inflate(R.layout.fragment_myclass, container, false);
+-        return view;
+-    }
+-}
+Index: app/src/main/java/com/example/jim/myapplication/view/OrgInfoActivy.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/OrgInfoActivy.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/OrgInfoActivy.java	(revision )
+@@ -0,0 +1,95 @@
++package com.example.jim.myapplication.view;
++
++import android.content.Intent;
++import android.support.v7.app.AppCompatActivity;
++import android.os.Bundle;
++import android.view.Menu;
++import android.view.MenuItem;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.MorePic;
++import com.example.jim.myapplication.model.OrgPic;
++import com.example.jim.myapplication.model.Organization;
++import com.jude.rollviewpager.RollPagerView;
++import com.jude.rollviewpager.adapter.DynamicPagerAdapter;
++
++import java.util.ArrayList;
++import java.util.List;
++
++import cn.bmob.v3.BmobQuery;
++import cn.bmob.v3.datatype.BmobFile;
++import cn.bmob.v3.listener.FindListener;
++
++public class OrgInfoActivy extends AppCompatActivity {
++
++    private Organization data;
++    private List<BmobFile> pics = new ArrayList<>();
++
++    private RollPagerView pagerView;
++    private TextView textView;
++
++
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        setContentView(R.layout.activity_org_info_activy);
++        data = getData();
++        initView();
++        queryMorePic();
++    }
++
++    private void initView() {
++        pagerView = (RollPagerView) findViewById(R.id.roll_pager);
++        textView = (TextView) findViewById(R.id.speci_intro);
++
++        textView.setText(data.getSpecificIntro());
++    }
++
++    private void queryMorePic() {
++        BmobQuery<OrgPic> query = new BmobQuery<>();
++        query.addWhereEqualTo("orgName", data.getOrgName());
++        query.findObjects(this, new FindListener<OrgPic>() {
++            @Override
++            public void onSuccess(List<OrgPic> list) {
++                for (OrgPic pic : list) {
++                    pics.add(pic.getOrgPic());
++                }
++                pagerView.setAdapter(new MyPagerAdapter());
++            }
++
++            @Override
++            public void onError(int i, String s) {
++
++            }
++        });
++    }
++
++    public Organization getData() {
++        Intent intent = getIntent();
++        return (Organization) intent.getSerializableExtra("org");
++    }
++
++    public class MyPagerAdapter extends DynamicPagerAdapter {
++
++        @Override
++        public View getView(ViewGroup viewGroup, int i) {
++            ImageView view = new ImageView(viewGroup.getContext());
++            view.setScaleType(ImageView.ScaleType.CENTER_CROP);
++            view.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
++            if (pics != null && pics.size() != 0)
++                pics.get(i).loadImage(viewGroup.getContext(), view);
++            else
++                view.setImageResource(R.drawable.img3);
++            return view;
++        }
++
++        @Override
++        public int getCount() {
++            return pics == null ? 1 : pics.size();
++        }
++    }
++}
+Index: app/src/main/java/com/example/jim/myapplication/Adapter/AllOrgAdapter.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/Adapter/AllOrgAdapter.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/Adapter/AllOrgAdapter.java	(revision )
+@@ -0,0 +1,25 @@
++package com.example.jim.myapplication.Adapter;
++
++import android.content.Context;
++import android.view.ViewGroup;
++
++import com.example.jim.myapplication.model.Organization;
++import com.example.jim.myapplication.view.AllOrgViewHolder;
++import com.jude.easyrecyclerview.adapter.BaseViewHolder;
++import com.jude.easyrecyclerview.adapter.RecyclerArrayAdapter;
++
++import java.util.List;
++
++/**
++ * Created by jim on 2015/8/25.
++ */
++public class AllOrgAdapter extends RecyclerArrayAdapter<Organization> {
++    public AllOrgAdapter(Context context) {
++        super(context);
++    }
++
++    @Override
++    public BaseViewHolder OnCreateViewHolder(ViewGroup viewGroup, int i) {
++        return new AllOrgViewHolder(viewGroup);
++    }
++}
+Index: app/build.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/build.gradle	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/build.gradle	(revision )
+@@ -3,27 +3,54 @@
+ android {
+     compileSdkVersion 22
+     buildToolsVersion "23.0.0 rc2"
++    Properties props = new Properties()
++    props.load(new FileInputStream(file("signing.properties")))
+ 
++    signingConfigs {
++        release{
++            keyAlias props['KEY_ALIAS']
++            keyPassword props['KEY_PASSWORD']
++            storeFile file(props['KEYSTORE_FILE'])
++            storePassword props['KEYSTORE_PASSWORD']
++        }
++    }
++
+     defaultConfig {
+         applicationId "com.example.jim.myapplication"
+-        minSdkVersion 16
++        minSdkVersion 15
+         targetSdkVersion 22
+         versionCode 1
+-        versionName "1.0"
++        versionName "1.1"
+     }
+     buildTypes {
+         release {
+-            minifyEnabled false
+-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
++            signingConfig signingConfigs.release
+         }
++        debug {
++            signingConfig signingConfigs.release
+-    }
+-}
++        }
++    }
++}
+ 
+ dependencies {
+     compile fileTree(dir: 'libs', include: ['*.jar'])
+     compile 'com.android.support:appcompat-v7:22.2.0'
+     compile fileTree(dir: 'libs', include: ['*.jar'])
+-    compile files('libs/BmobSDK_V3.3.9_0612.jar')
++    compile files('libs/BmobSDK_V3.4.2_0727.jar')
+     compile files('libs/BmobSMS_V1.0.0_20150612.jar')
++    compile 'br.com.liveo:navigationdrawer-material:2.3.3'
+     compile 'com.prolificinteractive:parallaxpager:2.2.0'
++    compile 'com.jude:imageprovider:1.0.4'
++    compile 'com.android.support:cardview-v7:22.2.0'
++    compile 'com.facebook.fresco:fresco:0.6.0+'
++    compile 'com.android.support:design:22.2.0'
++    compile 'com.jude:easyrecyclerview:1.0.3'
++    compile 'com.github.rey5137:material:1.2.1'
++    compile 'com.rengwuxian.materialedittext:library:2.1.4'
++    compile 'com.getbase:floatingactionbutton:1.10.0'
++    compile 'com.w4lle.library:NineLayout:1.0.0'
++    compile 'com.android.support:palette-v7:21.0.+'
++    compile files('libs/GifView.jar')
++    compile files('libs/Bmob_Push_V0.6beta_20150408.jar')
++    compile 'com.jude:rollviewpager:1.0.2'
+ }
+Index: .idea/inspectionProfiles/Project_Default.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/inspectionProfiles/Project_Default.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ .idea/inspectionProfiles/Project_Default.xml	(revision )
+@@ -2,6 +2,7 @@
+   <profile version="1.0">
+     <option name="myName" value="Project Default" />
+     <inspection_tool class="AndroidLintMissingPrefix" enabled="false" level="ERROR" enabled_by_default="false" />
++    <inspection_tool class="AndroidLintValidFragment" enabled="false" level="ERROR" enabled_by_default="false" />
+     <inspection_tool class="LoggerInitializedWithForeignClass" enabled="false" level="WARNING" enabled_by_default="false">
+       <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger" />
+       <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger" />
+\ No newline at end of file
+Index: app/src/main/res/menu/menu_org_info_activy.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/menu_org_info_activy.xml	(revision )
++++ app/src/main/res/menu/menu_org_info_activy.xml	(revision )
+@@ -0,0 +1,7 @@
++<menu xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    tools:context="com.example.jim.myapplication.view.OrgInfoActivy">
++    <item android:id="@+id/action_settings" android:title="@string/action_settings"
++        android:orderInCategory="100" app:showAsAction="never" />
++</menu>
+Index: app/src/main/java/com/example/jim/myapplication/model/MyInfo.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/model/MyInfo.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/model/MyInfo.java	(revision )
+@@ -8,9 +8,30 @@
+ /**
+  * Created by jim on 2015/6/14.
+  */
+-public class MyInfo extends BmobUser{
++public class MyInfo extends BmobUser {
+     private String myAcademy;
+     private String myClass;
++    private String picUri;
++    private String picName;
++
++    public MyInfo() {
++    }
++
++    public String getPicName() {
++        return picName;
++    }
++
++    public void setPicName(String picName) {
++        this.picName = picName;
++    }
++
++    public String getPicUri() {
++        return picUri;
++    }
++
++    public void setPicUri(String picUri) {
++        this.picUri = picUri;
++    }
+ 
+     public String getMyClass() {
+         return myClass;
+Index: app/.gitignore
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/.gitignore	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/.gitignore	(revision )
+@@ -1,1 +1,3 @@
+ /build
++/signing.properties
++/src/main/java/com/example/jim/myapplication/Config/App.java
+\ No newline at end of file
+Index: .idea/gradle.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/gradle.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ .idea/gradle.xml	(revision )
+@@ -5,12 +5,13 @@
+       <GradleProjectSettings>
+         <option name="distributionType" value="LOCAL" />
+         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+-        <option name="gradleHome" value="D:\Android\Android Studio\gradle\gradle-2.2.1" />
++        <option name="gradleHome" value="D:\Android\Android Studio\gradle\gradle-2.4" />
+         <option name="gradleJvm" value="1.7" />
+         <option name="modules">
+           <set>
+             <option value="$PROJECT_DIR$" />
+             <option value="$PROJECT_DIR$/app" />
++            <option value="$PROJECT_DIR$/mylibrary" />
+           </set>
+         </option>
+       </GradleProjectSettings>
+\ No newline at end of file
+Index: app/src/main/res/values/styles.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/values/styles.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/values/styles.xml	(revision )
+@@ -3,6 +3,40 @@
+     <!-- Base application theme. -->
+     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+         <!-- Customize your theme here. -->
++        <item name="colorPrimary">@color/nliveo_blue_colorPrimary</item>
++        <item name="colorPrimaryDark">@color/nliveo_blue_colorPrimaryDark</item>
++        <item name="colorAccent">@color/nliveo_blue_colorPrimary</item>
+     </style>
+ 
++    <style name="NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
++    </style>
++
++    <style name="nLiveoDrawer" parent="nLiveo.Theme.Light">
++        <!-- Customize your theme here. -->
++        <item name="colorPrimary">@color/nliveo_blue_colorPrimary</item>
++        <item name="colorPrimaryDark">@color/nliveo_blue_alpha_colorPrimaryDark</item>
++        <item name="colorAccent">@color/nliveo_blue_colorPrimary</item>
++    </style>
++
++    <style name="AppDark" parent="nLiveo.Theme.DarkActionBar"></style>
++
++    <style name="AppLight" parent="AppTheme.Ligth"></style>
++
++    <style name="transparentFrameWindowStyle" parent="android:style/Theme.Dialog">
++        <item name="android:windowBackground">@drawable/photo_choose_bg</item>
++    </style>
++
++    <style name="main_menu_animstyle">
++        <item name="android:windowEnterAnimation">@anim/photo_dialog_in_anim</item>
++        <item name="android:windowExitAnimation">@anim/photo_dialog_out_anim</item>
++    </style>
++    <style name="ToolbarRippleStyle" parent="Material.Drawable.Ripple.Touch.MatchView.Light">
++        <item name="rd_backgroundColor">@android:color/transparent</item>
++        <item name="rd_rippleColor">#33FFFFFF</item>
++    </style>
++
++    <style name="menu_labels_style">
++        <item name="android:background">@drawable/fab_label_background</item>
++        <item name="android:textColor">@color/White</item>
++    </style>
+ </resources>
+Index: app/src/main/res/drawable/photo_cancel_pressed.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_cancel_pressed.xml	(revision )
++++ app/src/main/res/drawable/photo_cancel_pressed.xml	(revision )
+@@ -0,0 +1,28 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle" >
++
++    <gradient
++        android:angle="90"
++        android:endColor="#CACACB"
++        android:startColor="#CACACB" />
++    <!--
++    <stroke
++        android:dashGap="2dp"
++        android:dashWidth="2dp"
++        android:width="2dp"
++        android:color="#00000000" >
++    </stroke>
++		描边
++
++
++
++    -->
++
++    <corners
++        android:bottomLeftRadius="5dp"
++        android:bottomRightRadius="5dp"
++        android:topLeftRadius="5dp"
++        android:topRightRadius="5dp" />
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/view/TextActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/TextActivity.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/TextActivity.java	(revision )
+@@ -0,0 +1,38 @@
++package com.example.jim.myapplication.view;
++
++import android.content.Intent;
++import android.support.v7.app.AppCompatActivity;
++import android.os.Bundle;
++import android.view.Menu;
++import android.view.MenuItem;
++import android.view.View;
++import android.widget.Button;
++import android.widget.EditText;
++
++import com.example.jim.myapplication.R;
++
++public class TextActivity extends AppCompatActivity {
++
++    Button back;
++    EditText editInfo;
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        setContentView(R.layout.activity_text);
++        initView();
++        back.setOnClickListener(new View.OnClickListener() {
++            @Override
++            public void onClick(View v) {
++                Intent intent = new Intent();
++                intent.putExtra("data_return", editInfo.getText().toString());
++                setResult(RESULT_OK, intent);
++                finish();
++            }
++        });
++    }
++
++    private void initView() {
++        back = (Button) findViewById(R.id.back);
++        editInfo = (EditText) findViewById(R.id.edit);
++    }
++}
+Index: app/src/main/res/drawable/photo_gallery_selector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_gallery_selector.xml	(revision )
++++ app/src/main/res/drawable/photo_gallery_selector.xml	(revision )
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++
++    <item android:drawable="@drawable/photo_gallery_pressed" android:state_focused="true"/>
++    <item android:drawable="@drawable/photo_gallery_pressed" android:state_focused="false" android:state_pressed="true"/>
++    <item android:drawable="@drawable/photo_gallery_normal" android:state_focused="false"/>
++
++</selector>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/Image3D/Image3DView.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/Image3D/Image3DView.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/Image3D/Image3DView.java	(revision )
+@@ -0,0 +1,270 @@
++package com.example.jim.myapplication.Image3D;
++
++import android.content.Context;
++import android.graphics.Bitmap;
++import android.graphics.Camera;
++import android.graphics.Canvas;
++import android.graphics.Matrix;
++import android.graphics.drawable.Drawable;
++import android.net.Uri;
++import android.util.AttributeSet;
++import android.widget.ImageView;
++
++/**
++ * Created by jim on 2015/8/18.
++ */
++public class Image3DView extends ImageView {
++    /**
++     * 旋转角度的基准值
++     */
++    private static final float BASE_DEGREE = 50f;
++    /**
++     * 旋转深度的基准值
++     */
++    private static final float BASE_DEEP = 150f;
++    private Camera mCamera;
++    private Matrix mMaxtrix;
++    private Bitmap mBitmap;
++    /**
++     * 当前图片对应的下标
++     */
++    private int mIndex;
++    /**
++     * 在前图片在X轴方向滚动的距离
++     */
++    private int mScrollX;
++    /**
++     * Image3DSwitchView控件的宽度
++     */
++    private int mLayoutWidth;
++    /**
++     * 当前图片的宽度
++     */
++    private int mWidth;
++    /**
++     * 当前旋转的角度
++     */
++    private float mRotateDegree;
++    /**
++     * 旋转的中心点
++     */
++    private float mDx;
++    /**
++     * 旋转的深度
++     */
++    private float mDeep;
++
++    public Image3DView(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        mCamera = new Camera();
++        mMaxtrix = new Matrix();
++    }
++
++    /**
++     * 初始化Image3DView所需要的信息，包括图片宽度，截取背景图等。
++     */
++    public void initImageViewBitmap() {
++        if (mBitmap == null) {
++            setDrawingCacheEnabled(true);
++            buildDrawingCache();
++            mBitmap = getDrawingCache();
++        }
++        mLayoutWidth = Image3DSwitchView.mWidth;
++        mWidth = getWidth() + Image3DSwitchView.IMAGE_PADDING * 2;
++    }
++
++    /**
++     * 设置旋转角度。
++     *
++     * @param index   当前图片的下标
++     * @param scrollX 当前图片在X轴方向滚动的距离
++     */
++    public void setRotateData(int index, int scrollX) {
++        mIndex = index;
++        mScrollX = scrollX;
++    }
++
++    /**
++     * 回收当前的Bitmap对象，以释放内存。
++     */
++    public void recycleBitmap() {
++        if (mBitmap != null && !mBitmap.isRecycled()) {
++            mBitmap.recycle();
++        }
++    }
++
++    @Override
++    public void setImageResource(int resId) {
++        super.setImageResource(resId);
++        mBitmap = null;
++        initImageViewBitmap();
++    }
++
++    @Override
++    public void setImageBitmap(Bitmap bm) {
++        super.setImageBitmap(bm);
++        mBitmap = null;
++        initImageViewBitmap();
++    }
++
++    @Override
++    public void setImageDrawable(Drawable drawable) {
++        super.setImageDrawable(drawable);
++        mBitmap = null;
++        initImageViewBitmap();
++    }
++
++    @Override
++    public void setImageURI(Uri uri) {
++        super.setImageURI(uri);
++        mBitmap = null;
++        initImageViewBitmap();
++    }
++
++    @Override
++    protected void onDraw(Canvas canvas) {
++        if (mBitmap == null) {
++            // 如果Bitmap对象还不存在，先使用父类的onDraw方法进行绘制
++            super.onDraw(canvas);
++        } else {
++            if (isImageVisible()) {
++                // 绘图时需要注意，只有当图片可见的时候才进行绘制，这样可以节省运算效率
++                computeRotateData();
++                mCamera.save();
++                mCamera.translate(0.0f, 0.0f, mDeep);
++                mCamera.rotateY(mRotateDegree);
++                mCamera.getMatrix(mMaxtrix);
++                mCamera.restore();
++                mMaxtrix.preTranslate(-mDx, -getHeight() / 2);
++                mMaxtrix.postTranslate(mDx, getHeight() / 2);
++                canvas.drawBitmap(mBitmap, mMaxtrix, null);
++            }
++        }
++    }
++
++    /**
++     * 在这里计算所有旋转所需要的数据。
++     */
++    private void computeRotateData() {
++        float degreePerPix = BASE_DEGREE / mWidth;
++        float deepPerPix = BASE_DEEP / ((mLayoutWidth - mWidth) / 2);
++        switch (mIndex) {
++            case 0:
++                mDx = mWidth;
++                mRotateDegree = 360f - (2 * mWidth + mScrollX) * degreePerPix;
++                if (mScrollX < -mWidth) {
++                    mDeep = 0;
++                } else {
++                    mDeep = (mWidth + mScrollX) * deepPerPix;
++                }
++                break;
++            case 1:
++                if (mScrollX > 0) {
++                    mDx = mWidth;
++                    mRotateDegree = (360f - BASE_DEGREE) - mScrollX * degreePerPix;
++                    mDeep = mScrollX * deepPerPix;
++                } else {
++                    if (mScrollX < -mWidth) {
++                        mDx = -Image3DSwitchView.IMAGE_PADDING * 2;
++                        mRotateDegree = (-mScrollX - mWidth) * degreePerPix;
++                    } else {
++                        mDx = mWidth;
++                        mRotateDegree = 360f - (mWidth + mScrollX) * degreePerPix;
++                    }
++                    mDeep = 0;
++                }
++                break;
++            case 2:
++                if (mScrollX > 0) {
++                    mDx = mWidth;
++                    mRotateDegree = 360f - mScrollX * degreePerPix;
++                    mDeep = 0;
++                    if (mScrollX > mWidth) {
++                        mDeep = (mScrollX - mWidth) * deepPerPix;
++                    }
++                } else {
++                    mDx = -Image3DSwitchView.IMAGE_PADDING * 2;
++                    mRotateDegree = -mScrollX * degreePerPix;
++                    mDeep = 0;
++                    if (mScrollX < -mWidth) {
++                        mDeep = -(mWidth + mScrollX) * deepPerPix;
++                    }
++                }
++                break;
++            case 3:
++                if (mScrollX < 0) {
++                    mDx = -Image3DSwitchView.IMAGE_PADDING * 2;
++                    mRotateDegree = BASE_DEGREE - mScrollX * degreePerPix;
++                    mDeep = -mScrollX * deepPerPix;
++                } else {
++                    if (mScrollX > mWidth) {
++                        mDx = mWidth;
++                        mRotateDegree = 360f - (mScrollX - mWidth) * degreePerPix;
++                    } else {
++                        mDx = -Image3DSwitchView.IMAGE_PADDING * 2;
++                        mRotateDegree = BASE_DEGREE - mScrollX * degreePerPix;
++                    }
++                    mDeep = 0;
++                }
++                break;
++            case 4:
++                mDx = -Image3DSwitchView.IMAGE_PADDING * 2;
++                mRotateDegree = (2 * mWidth - mScrollX) * degreePerPix;
++                if (mScrollX > mWidth) {
++                    mDeep = 0;
++                } else {
++                    mDeep = (mWidth - mScrollX) * deepPerPix;
++                }
++                break;
++        }
++    }
++
++    /**
++     * 判断当前图片是否可见。
++     *
++     * @return 当前图片可见返回true，不可见返回false。
++     */
++    private boolean isImageVisible() {
++        boolean isVisible = false;
++        switch (mIndex) {
++            case 0:
++                if (mScrollX < (mLayoutWidth - mWidth) / 2 - mWidth) {
++                    isVisible = true;
++                } else {
++                    isVisible = false;
++                }
++                break;
++            case 1:
++                if (mScrollX > (mLayoutWidth - mWidth) / 2) {
++                    isVisible = false;
++                } else {
++                    isVisible = true;
++                }
++                break;
++            case 2:
++                if (mScrollX > mLayoutWidth / 2 + mWidth / 2
++                        || mScrollX < -mLayoutWidth / 2 - mWidth / 2) {
++                    isVisible = false;
++                } else {
++                    isVisible = true;
++                }
++                break;
++            case 3:
++                if (mScrollX < -(mLayoutWidth - mWidth) / 2) {
++                    isVisible = false;
++                } else {
++                    isVisible = true;
++                }
++                break;
++            case 4:
++                if (mScrollX > mWidth - (mLayoutWidth - mWidth) / 2) {
++                    isVisible = true;
++                } else {
++                    isVisible = false;
++                }
++                break;
++        }
++        return isVisible;
++    }
++
++}
+Index: app/src/main/res/anim/photo_dialog_out_anim.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/anim/photo_dialog_out_anim.xml	(revision )
++++ app/src/main/res/anim/photo_dialog_out_anim.xml	(revision )
+@@ -0,0 +1,11 @@
++<?xml version="1.0" encoding="utf-8"?>
++<set xmlns:android="http://schemas.android.com/apk/res/android" >
++
++    <translate
++        android:duration="500"
++        android:fromXDelta="0"
++        android:fromYDelta="0"
++        android:toXDelta="0"
++        android:toYDelta="1000" />
++
++</set>
+\ No newline at end of file
+Index: app/src/main/res/layout/view_progress.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/view_progress.xml	(revision )
++++ app/src/main/res/layout/view_progress.xml	(revision )
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="vertical"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:gravity="center">
++    <ProgressBar
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_gravity="center_horizontal"
++        android:indeterminate="false"/>
++</LinearLayout>
+\ No newline at end of file
+Index: app/src/main/res/layout/view_empty.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/view_empty.xml	(revision )
++++ app/src/main/res/layout/view_empty.xml	(revision )
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="vertical"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:theme="@style/nLiveoDrawer"
++
++    android:gravity="center">
++    <TextView
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:text="暂无数据"/>
++
++</LinearLayout>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/view/ShowActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/ShowActivity.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/ShowActivity.java	(revision )
+@@ -0,0 +1,244 @@
++package com.example.jim.myapplication.view;
++
++import android.app.Activity;
++import android.content.Intent;
++import android.graphics.Bitmap;
++import android.graphics.BitmapFactory;
++import android.os.Bundle;
++import android.support.design.widget.CollapsingToolbarLayout;
++import android.support.v7.app.AppCompatActivity;
++import android.support.v7.graphics.Palette;
++import android.support.v7.widget.LinearLayoutManager;
++import android.support.v7.widget.RecyclerView;
++import android.support.v7.widget.Toolbar;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++import android.widget.ImageView;
++import android.widget.TextView;
++
++import java.util.List;
++
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.Introduction;
++import com.example.jim.myapplication.model.MorePic;
++import com.example.jim.myapplication.utils.LogUtil;
++
++import cn.bmob.v3.BmobQuery;
++import cn.bmob.v3.datatype.BmobQueryResult;
++import cn.bmob.v3.exception.BmobException;
++import cn.bmob.v3.listener.SQLQueryListener;
++
++public class ShowActivity extends AppCompatActivity {
++    private RecyclerView mRecyclerView;
++    private RecyclerView picRecyclerView;
++    private List<Introduction> list = null;
++    private List<MorePic> pics = null;
++    private Activity activity;
++    private ImageView backImage;
++    private Intent intent;
++
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        setContentView(R.layout.activity_show);
++        activity = this;
++        intent = getIntent();
++        backImage = (ImageView) findViewById(R.id.back_image);
++        queryBackImage();
++        queryMorePics();
++        final Toolbar tb = (Toolbar) findViewById(R.id.tb);
++        setSupportActionBar(tb);
++        final CollapsingToolbarLayout ctl = (CollapsingToolbarLayout) findViewById(R.id.ctl);
++        ctl.setTitle(intent.getStringExtra("name"));
++        mRecyclerView = (RecyclerView) findViewById(R.id.rv);
++        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
++        picRecyclerView = (RecyclerView) findViewById(R.id.pics);
++        picRecyclerView.setLayoutManager(new LinearLayoutManager(this));
++        setContentScrim(ctl);
++        //initGifView();
++    }
++
++    /*private void initGifView(){
++        GifView gifView = (GifView) findViewById(R.id.gif);
++        gifView.setGifImage(R.raw.snowy);
++        gifView.setGifImageType(GifView.GifImageType.COVER);
++    }*/
++
++
++    private void setContentScrim(final CollapsingToolbarLayout layout) {
++        Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.banner);
++        Palette.generateAsync(bmp, new Palette.PaletteAsyncListener() {
++            @Override
++            public void onGenerated(Palette palette) {
++                Palette.Swatch swatch = palette.getDarkMutedSwatch();
++                layout.setContentScrimColor(swatch.getRgb());
++            }
++        });
++    }
++
++    private static final int NO_DATA = 9;
++    private String ObjectId;
++
++    private void queryBackImage() {
++        ObjectId = intent.getStringExtra("userId");
++        String bq1 = "select include user,* from Introduction where user = pointer('_User', '" + ObjectId + "')";
++        new BmobQuery<Introduction>().doSQLQuery(this, bq1, new SQLQueryListener<Introduction>() {
++            @Override
++            public void done(BmobQueryResult<Introduction> bmobQueryResult, BmobException e) {
++                if (e == null) {
++                    list = bmobQueryResult.getResults();
++                    if (list != null && list.size() != 0) {
++                        list.get(0).getBackImage().loadImage(activity, backImage);
++                        mRecyclerView.setAdapter(new MyAdapter(list.get(0)));
++                    } else {
++                        mRecyclerView.setAdapter(new MyAdapter(NO_DATA));
++                    }
++                }
++            }
++        });
++    }
++
++    private void queryMorePics() {
++        String bq2 = "select include user,* from MorePic where user = pointer('_User', '" + ObjectId + "')";
++        new BmobQuery<MorePic>().doSQLQuery(this, bq2, new SQLQueryListener<MorePic>() {
++            @Override
++            public void done(BmobQueryResult<MorePic> bmobQueryResult, BmobException e) {
++                if (e == null) {
++                    pics = bmobQueryResult.getResults();
++                    if (pics != null && pics.size() != 0) {
++                        picRecyclerView.setAdapter(new MorePicAdapter(pics));
++                    }
++                }
++            }
++        });
++    }
++
++    class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder> {
++        private String signature;
++        private String introduce;
++        private String phone = "";
++        private String QQ;
++        private String weixin;
++        private int data = 0;
++
++        public MyAdapter(Introduction introduction) {
++            signature = introduction.getSignature();
++            introduce = introduction.getIntroduce();
++            if (introduction.isPhoneShow())
++                phone = introduction.getUser().getMobilePhoneNumber();
++            QQ = introduction.getQQ();
++            weixin = introduction.getWeixin();
++        }
++
++        public MyAdapter(int info) {
++            data = info;
++        }
++
++        @Override
++        public MyAdapter.ViewHolder onCreateViewHolder(final ViewGroup viewGroup, int i) {
++            View v = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.show_info, viewGroup, false);
++            return new ViewHolder(v);
++        }
++
++        @Override
++        public void onBindViewHolder(final MyAdapter.ViewHolder viewHolder, int i) {
++            switch (i) {
++                case 2:
++                    if (data == NO_DATA) {
++                        viewHolder.view.setText("  懒人一个！！");
++                        viewHolder.view.setTextColor(getResources().getColor(R.color.pink_pressed));
++                        viewHolder.view.getPaint().setFakeBoldText(true);
++                    } else {
++                        viewHolder.view.setText("  个性签名： " + signature);
++                        viewHolder.view.setTextColor(getResources().getColor(R.color.colorAccent));
++                    }
++                    break;
++                case 3:
++                    viewHolder.view.setVisibility(View.GONE);
++                    viewHolder.image.setVisibility(View.VISIBLE);
++                    viewHolder.image.setImageResource(R.drawable.jiantouzuo);
++                    break;
++                case 4:
++                    viewHolder.view.setText("  斗笔介绍： " + introduce);
++                    viewHolder.view.setTextColor(getResources().getColor(R.color.Orange));
++                    break;
++                case 6:
++                    viewHolder.view.setText("  手机：     " + phone);
++                    viewHolder.view.setTextColor(getResources().getColor(R.color.DeepPurple));
++
++                    break;
++                case 7:
++                    viewHolder.view.setText("  QQ:           " + QQ);
++                    viewHolder.view.setTextColor(getResources().getColor(R.color.Gray600));
++
++                    break;
++                case 8:
++                    viewHolder.view.setText("  微信：      " + weixin);
++                    viewHolder.view.setTextColor(getResources().getColor(R.color.pink));
++
++                    break;
++            }
++        }
++
++        @Override
++        public int getItemCount() {
++            if (data == NO_DATA)
++                return 4;
++            else
++                return 9;
++        }
++
++        class ViewHolder extends RecyclerView.ViewHolder {
++            TextView view;
++            ImageView image;
++
++            public ViewHolder(View v) {
++                super(v);
++                view = (TextView) v.findViewById(R.id.info_text);
++                image = (ImageView) v.findViewById(R.id.induct_image);
++                image.setVisibility(View.GONE);
++                if (data == NO_DATA)
++                    view.setTextSize(50);
++                else
++                    view.setTextSize(20);
++            }
++        }
++    }
++
++    class MorePicAdapter extends RecyclerView.Adapter<MorePicAdapter.ViewHolder> {
++        private List<MorePic> pics;
++
++        public MorePicAdapter(List<MorePic> pics) {
++            this.pics = pics;
++        }
++
++        @Override
++        public MorePicAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
++            ImageView imageView = new ImageView(parent.getContext());
++            return new ViewHolder(imageView);
++        }
++
++        @Override
++        public void onBindViewHolder(MorePicAdapter.ViewHolder holder, int position) {
++            LogUtil.i("oic", pics.get(position).getPicFile().getFilename());
++            pics.get(position).getPicFile().loadImage(activity, holder.imageView);
++        }
++
++        @Override
++        public int getItemCount() {
++            return pics.size();
++        }
++
++        class ViewHolder extends RecyclerView.ViewHolder {
++            ImageView imageView;
++
++            public ViewHolder(View itemView) {
++                super(itemView);
++                imageView = (ImageView) itemView;
++                imageView.setPadding(10, 10, 10, 10);
++                imageView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
++            }
++        }
++    }
++}
+Index: app/src/main/res/menu/menu_main.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/menu_main.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/menu/menu_main.xml	(revision )
+@@ -1,6 +1,10 @@
+ <menu xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+-    xmlns:tools="http://schemas.android.com/tools" tools:context=".MainActivity">
+-    <item android:id="@+id/action_settings" android:title="@string/action_settings"
+-        android:orderInCategory="100" app:showAsAction="never" />
++    xmlns:tools="http://schemas.android.com/tools"
++    tools:context="com.example.jim.myapplication.view.MainActivity">
++    <item android:id="@+id/action_share"
++        android:title="分享"
++        android:orderInCategory="90"
++        android:icon="@drawable/ab_share"
++        app:showAsAction="ifRoom" />
+ </menu>
+Index: app/src/main/java/com/example/jim/myapplication/model/OrgPic.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/model/OrgPic.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/model/OrgPic.java	(revision )
+@@ -0,0 +1,44 @@
++package com.example.jim.myapplication.model;
++
++import cn.bmob.v3.BmobObject;
++import cn.bmob.v3.datatype.BmobFile;
++
++/**
++ * Created by jim on 2015/8/23.
++ */
++public class OrgPic extends BmobObject{
++    private BmobFile orgPic;
++    private String orgName;
++    private String uri;
++
++    public OrgPic(){};
++    public OrgPic(String orgName, BmobFile orgPic, String uri) {
++        this.orgName = orgName;
++        this.orgPic = orgPic;
++        this.uri = uri;
++    }
++
++    public String getOrgName() {
++        return orgName;
++    }
++
++    public void setOrgName(String orgName) {
++        this.orgName = orgName;
++    }
++
++    public BmobFile getOrgPic() {
++        return orgPic;
++    }
++
++    public void setOrgPic(BmobFile orgPic) {
++        this.orgPic = orgPic;
++    }
++
++    public String getUri() {
++        return uri;
++    }
++
++    public void setUri(String uri) {
++        this.uri = uri;
++    }
++}
+Index: app/src/main/res/drawable/photo_camera_selector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_camera_selector.xml	(revision )
++++ app/src/main/res/drawable/photo_camera_selector.xml	(revision )
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++
++    <item android:drawable="@drawable/photo_camera_pressed" android:state_focused="true"/>
++    <item android:drawable="@drawable/photo_camera_pressed" android:state_focused="false" android:state_pressed="true"/>
++    <item android:drawable="@drawable/photo_camera_normal" android:state_focused="false"/>
++
++</selector>
+\ No newline at end of file
+Index: .idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/vcs.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ .idea/vcs.xml	(revision )
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="VcsDirectoryMappings">
+-    <mapping directory="" vcs="" />
++    <mapping directory="$PROJECT_DIR$" vcs="Git" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: app/src/main/res/layout/activity_main.xml
+===================================================================
+--- app/src/main/res/layout/activity_main.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/layout/activity_main.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
+@@ -1,25 +0,0 @@
+-<!-- A DrawerLayout is intended to be used as the top-level content view using match_parent for both width and height to consume the full space available. -->
+-<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    xmlns:tools="http://schemas.android.com/tools" android:id="@+id/drawer_layout"
+-    android:layout_width="match_parent" android:layout_height="match_parent"
+-    tools:context="com.example.jim.myapplication.MainActivity">
+-
+-    <!-- As the main content view, the view below consumes the entire
+-         space available using match_parent in both dimensions. -->
+-    <FrameLayout android:id="@+id/container" android:layout_width="match_parent"
+-        android:layout_height="match_parent" />
+-
+-    <!-- android:layout_gravity="start" tells DrawerLayout to treat
+-         this as a sliding drawer on the left side for left-to-right
+-         languages and on the right side for right-to-left languages.
+-         If you're not building against API 17 or higher, use
+-         android:layout_gravity="left" instead. -->
+-    <!-- The drawer is given a fixed width in dp and extends the full height of
+-         the container. -->
+-    <fragment android:id="@+id/navigation_drawer"
+-        android:layout_width="@dimen/navigation_drawer_width" android:layout_height="match_parent"
+-        android:layout_gravity="start"
+-        android:name="com.example.jim.myapplication.NavigationDrawerFragment"
+-        tools:layout="@layout/fragment_navigation_drawer" />
+-
+-</android.support.v4.widget.DrawerLayout>
+Index: app/src/main/res/menu/menu_my_org.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/menu_my_org.xml	(revision )
++++ app/src/main/res/menu/menu_my_org.xml	(revision )
+@@ -0,0 +1,7 @@
++<menu xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    tools:context="com.example.jim.myapplication.view.MyOrgActivity">
++    <item android:id="@+id/action_settings" android:title="@string/action_settings"
++        android:orderInCategory="100" app:showAsAction="never" />
++</menu>
+Index: app/src/main/AndroidManifest.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/AndroidManifest.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/AndroidManifest.xml	(revision )
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+-    package="com.example.jim.myapplication" >
++    package="com.example.jim.myapplication">
+ 
+     <uses-permission android:name="android.permission.INTERNET" />
+     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+@@ -8,27 +8,105 @@
+     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+     <uses-permission android:name="android.permission.READ_LOGS" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+ 
++    <permission
++        android:name="cn.bmob.permission.push"
++        android:protectionLevel="normal" />
++
++    <uses-permission android:name="cn.bmob.permission.push" />
++    <!-- 添加自定义的权限 -->
++    <uses-permission android:name="android.permission.READ_LOGS" />
++    <uses-permission android:name="android.permission.INTERNET" />
++    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
++    <uses-permission android:name="android.permission.WAKE_LOCK" />
++    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
++    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
++    <uses-permission android:name="android.permission.VIBRATE" />
++    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
++    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
++    <uses-permission android:name="android.permission.RECEIVE_USER_PRESENT" />
++
+     <application
+         android:allowBackup="true"
+-        android:icon="@mipmap/ic_launcher"
++        android:icon="@drawable/icon"
+         android:label="@string/app_name"
+-        android:theme="@style/AppTheme" >
++        android:theme="@style/AppTheme">
+         <activity
+-            android:name=".SplashActivity"
+-            android:label="@string/app_name" >
++            android:name=".view.SplashActivity"
++            android:label="@string/app_name"
++            android:theme="@style/NoActionBar" >
+-            <intent-filter>
+-                <action android:name="android.intent.action.MAIN" />
++        <intent-filter>
++            <action android:name="android.intent.action.MAIN" />
+ 
+-                <category android:name="android.intent.category.LAUNCHER" />
+-            </intent-filter>
+-        </activity>
++            <category android:name="android.intent.category.LAUNCHER" />
++        </intent-filter>
++    </activity>
++
+-        <activity
++    <activity
+-            android:name=".MainActivity"
+-            android:label="@string/title_activity_main" />
+-        <activity android:name=".RegisterActivity" />
+-        <activity android:name=".LoginActivity" />
+-        <activity android:name=".GuideActivity" />
++        android:name=".view.RegisterActivity"
++        android:theme="@style/NoActionBar"></activity>
++    <activity
++        android:name=".view.LoginActivity"
++        android:theme="@style/NoActionBar"></activity>
++    <activity android:name=".view.GuideActivity" />
++    <activity
++        android:name=".view.MainActivity"
++        android:label="@string/title_activity_main"
++        android:theme="@style/nLiveo.Theme.DarkActionBar" >
++    </activity>
++    <activity
++        android:name=".view.setInformationActivity"
++        android:theme="@style/NoActionBar"></activity>
++    <activity
++        android:name=".view.ShowActivity"
++        android:label="@string/title_activity_show"
++        android:theme="@style/NoActionBar"></activity>
++
++    <service
++        android:name="cn.bmob.push.lib.service.PushService"
++        android:exported="true"
++        android:label="PushService"
++        android:permission="cn.bmob.permission.push"
++        android:process="cn.bmob.push">
++        <intent-filter>
++            <action android:name="cn.bmob.push.lib.service.PushService" />
++        </intent-filter>
++    </service>
++
++    <receiver android:name="cn.bmob.push.PushReceiver">
++        <intent-filter android:priority="2147483647"> <!-- 优先级加最高 -->
++            <!-- 系统启动完成后会调用 -->
++            <action android:name="android.intent.action.BOOT_COMPLETED" />
++            <!-- 解锁完成后会调用 -->
++            <action android:name="android.intent.action.USER_PRESENT" />
++            <!-- 监听网络连通性 -->
++            <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
++        </intent-filter>
++    </receiver>
++    <receiver android:name=".MyPushMessageReceiver">
++        <intent-filter>
++            <action android:name="cn.bmob.push.action.MESSAGE" />
++        </intent-filter>
++    </receiver>
++
++    <activity
++        android:name=".view.MyOrgActivity"
++        android:label="@string/title_activity_my_org"
++        android:theme="@style/NoActionBar"></activity>
++    <activity
++        android:name=".view.TextActivity"
++        android:label="@string/title_activity_text"
++        android:theme="@style/NoActionBar"></activity>
++    <activity
++        android:name=".view.OrgPicsActivity"
++        android:label="@string/title_activity_org_pics"
++        android:theme="@style/NoActionBar"></activity>
++    <activity
++        android:name=".view.OrgInfoActivy"
++        android:label="@string/title_activity_org_info_activy"
++        android:theme="@style/NoActionBar"></activity>
+-    </application>
++</application>
+ 
+-</manifest>
++    </manifest>
+Index: app/src/main/java/com/example/jim/myapplication/view/MyClassFragment.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/MyClassFragment.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/MyClassFragment.java	(revision )
+@@ -0,0 +1,133 @@
++package com.example.jim.myapplication.view;
++
++import android.app.Activity;
++import android.os.Bundle;
++import android.support.v4.app.Fragment;
++import android.support.v4.widget.SwipeRefreshLayout;
++import android.support.v7.widget.LinearLayoutManager;
++import android.view.LayoutInflater;
++import android.view.View;
++import android.view.ViewGroup;
++
++import com.bmob.BmobProFile;
++import com.example.jim.myapplication.Adapter.MyClassAdapter;
++import com.example.jim.myapplication.ClassFlowButton;
++import com.example.jim.myapplication.Config.App;
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.MyClassMate;
++import com.example.jim.myapplication.model.MyInfo;
++import com.example.jim.myapplication.utils.NetUtil;
++import com.facebook.drawee.backends.pipeline.Fresco;
++import com.jude.easyrecyclerview.EasyRecyclerView;
++import com.jude.easyrecyclerview.adapter.RecyclerArrayAdapter;
++
++import java.util.ArrayList;
++import java.util.List;
++
++import cn.bmob.v3.BmobQuery;
++import cn.bmob.v3.listener.FindListener;
++
++
++/**
++ * Created by jim on 2015/6/19.
++ */
++public class MyClassFragment extends Fragment implements RecyclerArrayAdapter.OnLoadMoreListener, SwipeRefreshLayout.OnRefreshListener {
++    private static MyClassFragment mcf = null;
++    private List<MyClassMate> myClassMates = new ArrayList<>();
++    private EasyRecyclerView recyclerView;
++    private MyClassAdapter adapter;
++    private String myClass;
++
++    public static MyClassFragment getInstance() {
++        if (mcf == null) {
++            mcf = new MyClassFragment();
++        }
++        return mcf;
++    }
++
++    @Override
++    public void onAttach(Activity activity) {
++        super.onAttach(activity);
++        myClass = MainActivity.user.getMyClass();
++        Fresco.initialize(getActivity());
++    }
++
++    public View onCreateView(LayoutInflater inflater, ViewGroup container,
++                             Bundle savedInstanceState) {
++        final View view = inflater.inflate(R.layout.fragment_myclass, container, false);
++        ClassFlowButton.initButton(view, (MainActivity)getActivity());
++        recyclerView = (EasyRecyclerView) view.findViewById(R.id.recyclerView);
++        recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
++        recyclerView.setAdapterWithProgress(adapter = new MyClassAdapter(getActivity()));
++        adapter.setMore(R.layout.view_more, this);
++        adapter.setNoMore(R.layout.view_nomore);
++        recyclerView.setRefreshListener(this);
++        queryMyClassmates(0, STATE_MORE);
++        return view;
++    }
++
++    private static final int STATE_REFRESH = 0;// 下拉刷新
++    private static final int STATE_MORE = 1;// 加载更多
++
++    private int limit = 10;        // 每页的数据是10条
++    private int curPage = 0;        // 当前页的编号，从0开始
++
++    void queryMyClassmates(final int page, final int actionType) {
++        BmobQuery<MyInfo> query = new BmobQuery<>();
++        if (NetUtil.isNetworkAvailable(getActivity())){
++            query.setCachePolicy(BmobQuery.CachePolicy.NETWORK_ELSE_CACHE);
++        }
++        else
++            query.setCachePolicy(BmobQuery.CachePolicy.CACHE_ELSE_NETWORK);
++        query.addWhereEqualTo("myClass", myClass);
++        query.setLimit(limit);            // 设置每页多少条数据
++        query.setSkip(page * limit);        // 从第几条数据开始，
++        query.findObjects(getActivity(), new FindListener<MyInfo>() {
++            @Override
++            public void onSuccess(List<MyInfo> list) {
++                myClassMates.clear();
++                if (list.size() > 0) {
++                    if (actionType == STATE_REFRESH){
++                        adapter.clear();
++                    }
++                } else {
++                    adapter.stopMore();
++                }
++                for (MyInfo user : list) {
++                    String finalURL = "";
++                    String imageUrl = "";
++                    imageUrl = user.getPicUri();
++                    String imageName = user.getPicName();
++                    if (imageUrl != "" && imageUrl != null)
++                    finalURL = BmobProFile.getInstance(getActivity()).signURL(imageName, imageUrl, App.ACCESS_KEY, 0, null);
++                    myClassMates.add(new MyClassMate(user.getUsername(), finalURL, user.getMobilePhoneNumber()));
++                }
++                adapter.addAll(myClassMates);
++                adapter.notifyDataSetChanged();
++            }
++
++            @Override
++            public void onError(int i, String s) {
++
++            }
++        });
++    }
++
++    @Override
++    public void onLoadMore() {
++        curPage++;
++        queryMyClassmates(curPage, STATE_MORE);
++    }
++
++    @Override
++    public void onRefresh() {
++        curPage = 0;
++        queryMyClassmates(curPage, STATE_REFRESH);
++    }
++
++    @Override
++    public void onPause() {
++        super.onPause();
++        curPage = 0;
++    }
++}
+Index: app/src/main/res/layout/fragment_org.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/fragment_org.xml	(revision )
++++ app/src/main/res/layout/fragment_org.xml	(revision )
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    android:orientation="vertical"
++    android:theme="@style/nLiveoDrawer"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent">
++    <com.jude.easyrecyclerview.EasyRecyclerView
++        android:id="@+id/org_recycler"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        app:layout_empty="@layout/view_empty"
++        app:layout_progress="@layout/view_progress"
++        />
++</LinearLayout>
+\ No newline at end of file
+Index: app/src/main/res/layout/fragment_myclass.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/fragment_myclass.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/layout/fragment_myclass.xml	(revision )
+@@ -1,6 +1,53 @@
+ <?xml version="1.0" encoding="utf-8"?>
+-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical" android:layout_width="match_parent"
++<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/tools"
++    xmlns:fab="http://schemas.android.com/apk/res-auto"
++    android:theme="@style/nLiveoDrawer"
++    android:layout_width="match_parent"
+     android:layout_height="match_parent">
+ 
+-</LinearLayout>
+\ No newline at end of file
++    <com.rey.material.widget.Spinner
++        android:id="@+id/spinner_academies"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:visibility="gone" />
++
++    <com.rey.material.widget.Spinner
++        android:id="@+id/spinner_classes"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_toRightOf="@+id/spinner_academies"
++        android:visibility="gone" />
++
++    <com.jude.easyrecyclerview.EasyRecyclerView
++        android:id="@+id/recyclerView"
++        android:layout_width="match_parent"
++        android:layout_below="@+id/spinner_academies"
++        android:layout_height="match_parent"
++        app:layout_empty="@layout/view_empty"
++        app:layout_progress="@layout/view_progress" />
++
++    <com.getbase.floatingactionbutton.FloatingActionsMenu
++        android:id="@+id/pink_icon"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_alignParentBottom="true"
++        android:layout_alignParentRight="true"
++        fab:fab_labelStyle="@style/menu_labels_style"
++        fab:fab_addButtonColorNormal="@color/pink"
++        fab:fab_addButtonColorPressed="@color/pink_pressed">
++
++        <com.getbase.floatingactionbutton.FloatingActionButton
++            android:id="@+id/choose_myClass"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            fab:fab_title="我的班级" />
++
++        <com.getbase.floatingactionbutton.FloatingActionButton
++            android:id="@+id/choose_allClass"
++            android:layout_width="wrap_content"
++            android:layout_height="wrap_content"
++            fab:fab_title="更多班级" />
++    </com.getbase.floatingactionbutton.FloatingActionsMenu>
++
++</RelativeLayout>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/MyPushMessageReceiver.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/MyPushMessageReceiver.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/MyPushMessageReceiver.java	(revision )
+@@ -0,0 +1,36 @@
++package com.example.jim.myapplication;
++
++import android.app.Notification;
++import android.app.NotificationManager;
++import android.content.BroadcastReceiver;
++import android.content.Context;
++import android.content.Intent;
++import android.util.Log;
++
++import org.json.JSONException;
++import org.json.JSONObject;
++
++/**
++ * Created by jim on 2015/8/22.
++ */
++public class MyPushMessageReceiver extends BroadcastReceiver {
++
++    @Override
++    public void onReceive(Context context, Intent intent) {
++        String msg = "";
++        // TODO Auto-generated method stub
++        try {
++            JSONObject object = new JSONObject(intent.getStringExtra("msg"));
++            msg = object.getString("alert");
++        } catch (JSONException e) {
++            e.printStackTrace();
++        }
++        NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
++        Notification notification = new Notification(R.drawable.icon, msg, System.currentTimeMillis());
++        notification.setLatestEventInfo(context, "盆友们", msg, null);
++        notification.defaults = Notification.DEFAULT_ALL;
++        manager.notify(1, notification);
++    }
++
++}
++
+Index: app/app.iml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/app.iml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/app.iml	(revision )
+@@ -12,10 +12,12 @@
+         <option name="SELECTED_TEST_ARTIFACT" value="_android_test_" />
+         <option name="ASSEMBLE_TASK_NAME" value="assembleDebug" />
+         <option name="COMPILE_JAVA_TASK_NAME" value="compileDebugSources" />
+-        <option name="SOURCE_GEN_TASK_NAME" value="generateDebugSources" />
+         <option name="ASSEMBLE_TEST_TASK_NAME" value="assembleDebugAndroidTest" />
+         <option name="COMPILE_JAVA_TEST_TASK_NAME" value="compileDebugAndroidTestSources" />
+-        <option name="TEST_SOURCE_GEN_TASK_NAME" value="generateDebugAndroidTestSources" />
++        <afterSyncTasks>
++          <task>generateDebugAndroidTestSources</task>
++          <task>generateDebugSources</task>
++        </afterSyncTasks>
+         <option name="ALLOW_USER_CONFIGURATION" value="false" />
+         <option name="MANIFEST_FILE_RELATIVE_PATH" value="/src/main/AndroidManifest.xml" />
+         <option name="RES_FOLDER_RELATIVE_PATH" value="/src/main/res" />
+@@ -24,7 +26,7 @@
+       </configuration>
+     </facet>
+   </component>
+-  <component name="NewModuleRootManager" inherit-compiler-output="false">
++  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_7" inherit-compiler-output="false">
+     <output url="file://$MODULE_DIR$/build/intermediates/classes/debug" />
+     <output-test url="file://$MODULE_DIR$/build/intermediates/classes/androidTest/debug" />
+     <exclude-output />
+@@ -69,9 +71,25 @@
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/dependency-cache" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/dex" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/dex-cache" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/br.com.liveo/navigationdrawer-material/2.3.3/jars" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/appcompat-v7/22.2.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/cardview-v7/22.2.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/design/22.2.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/palette-v7/21.0.3/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/recyclerview-v7/22.2.0/jars" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.android.support/support-v4/22.2.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.facebook.fresco/drawee/0.6.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.facebook.fresco/fbcore/0.6.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.facebook.fresco/fresco/0.6.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.facebook.fresco/imagepipeline/0.6.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.getbase/floatingactionbutton/1.10.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.github.rey5137/material/1.2.1/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.jude/easyrecyclerview/1.0.3/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.jude/imageprovider/1.0.4/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.jude/rollviewpager/1.0.2/jars" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.prolificinteractive/parallaxpager/2.2.0/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.rengwuxian.materialedittext/library/2.1.4/jars" />
++      <excludeFolder url="file://$MODULE_DIR$/build/intermediates/exploded-aar/com.w4lle.library/NineLayout/1.0.0/jars" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/incremental" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/jacoco" />
+       <excludeFolder url="file://$MODULE_DIR$/build/intermediates/javaResources" />
+@@ -89,11 +107,32 @@
+     </content>
+     <orderEntry type="jdk" jdkName="Android API 22 Platform" jdkType="Android SDK" />
+     <orderEntry type="sourceFolder" forTests="false" />
++    <orderEntry type="library" exported="" name="design-22.2.0" level="project" />
++    <orderEntry type="library" exported="" name="fbcore-0.6.0" level="project" />
++    <orderEntry type="library" exported="" name="Bmob_Push_V0.6beta_20150408" level="project" />
++    <orderEntry type="library" exported="" name="library-2.1.4" level="project" />
++    <orderEntry type="library" exported="" name="navigationdrawer-material-2.3.3" level="project" />
++    <orderEntry type="library" exported="" name="BmobSMS_V1.0.0_20150612" level="project" />
++    <orderEntry type="library" exported="" name="NineLayout-1.0.0" level="project" />
++    <orderEntry type="library" exported="" name="palette-v7-21.0.3" level="project" />
++    <orderEntry type="library" exported="" name="easyrecyclerview-1.0.3" level="project" />
++    <orderEntry type="library" exported="" name="library-2.4.0" level="project" />
++    <orderEntry type="library" exported="" name="rollviewpager-1.0.2" level="project" />
++    <orderEntry type="library" exported="" name="GifView" level="project" />
++    <orderEntry type="library" exported="" name="drawee-0.6.0" level="project" />
+     <orderEntry type="library" exported="" name="parallaxpager-2.2.0" level="project" />
+-    <orderEntry type="library" exported="" name="support-v4-22.2.0" level="project" />
+     <orderEntry type="library" exported="" name="support-annotations-22.2.0" level="project" />
+-    <orderEntry type="library" exported="" name="BmobSDK_V3.3.9_0612" level="project" />
++    <orderEntry type="library" exported="" name="recyclerview-v7-22.2.0" level="project" />
++    <orderEntry type="library" exported="" name="Volley" level="project" />
++    <orderEntry type="library" exported="" name="cardview-v7-22.2.0" level="project" />
++    <orderEntry type="library" exported="" name="material-1.2.1" level="project" />
++    <orderEntry type="library" exported="" name="BmobSDK_V3.4.2_0727" level="project" />
++    <orderEntry type="library" exported="" name="imageprovider-1.0.4" level="project" />
++    <orderEntry type="library" exported="" name="support-v4-22.2.0" level="project" />
++    <orderEntry type="library" exported="" name="fresco-0.6.0" level="project" />
++    <orderEntry type="library" exported="" name="imagepipeline-0.6.0" level="project" />
++    <orderEntry type="library" exported="" name="bolts-android-1.1.4" level="project" />
+     <orderEntry type="library" exported="" name="appcompat-v7-22.2.0" level="project" />
+-    <orderEntry type="library" exported="" name="BmobSMS_V1.0.0_20150612" level="project" />
++    <orderEntry type="library" exported="" name="floatingactionbutton-1.10.0" level="project" />
+   </component>
+ </module>
+\ No newline at end of file
+Index: app/src/main/res/menu/main.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/main.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/menu/main.xml	(revision )
+@@ -1,7 +1,7 @@
+ <menu xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:tools="http://schemas.android.com/tools"
+-    tools:context="com.example.jim.myapplication.MainActivity">
++    tools:context="com.example.jim.myapplication.view.MainActivity">
+     <item android:id="@+id/action_example" android:title="@string/action_example"
+         app:showAsAction="withText|ifRoom" />
+     <item android:id="@+id/action_settings" android:title="@string/action_settings"
+Index: .idea/modules.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/modules.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ .idea/modules.xml	(revision )
+@@ -4,6 +4,7 @@
+     <modules>
+       <module fileurl="file://$PROJECT_DIR$/MyApplication.iml" filepath="$PROJECT_DIR$/MyApplication.iml" />
+       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
++      <module fileurl="file://$PROJECT_DIR$/mylibrary/mylibrary.iml" filepath="$PROJECT_DIR$/mylibrary/mylibrary.iml" />
+     </modules>
+   </component>
+ </project>
+\ No newline at end of file
+Index: app/src/main/res/drawable/photo_cancel_selector.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_cancel_selector.xml	(revision )
++++ app/src/main/res/drawable/photo_cancel_selector.xml	(revision )
+@@ -0,0 +1,8 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<selector xmlns:android="http://schemas.android.com/apk/res/android">
++
++    <item android:drawable="@drawable/photo_cancel_pressed" android:state_focused="true"/>
++    <item android:drawable="@drawable/photo_cancel_pressed" android:state_focused="false" android:state_pressed="true"/>
++    <item android:drawable="@drawable/photo_cancel_normal" android:state_focused="false"/>
++
++</selector>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/RegisterActivity.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/RegisterActivity.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/view/RegisterActivity.java	(revision )
+@@ -1,31 +1,26 @@
+-package com.example.jim.myapplication;
++package com.example.jim.myapplication.view;
+ 
+-import android.app.AlertDialog;
+ import android.content.Intent;
++import android.content.SharedPreferences;
+ import android.os.Bundle;
+ import android.support.v7.app.AppCompatActivity;
+-import android.util.Log;
+ import android.view.View;
+ import android.widget.ArrayAdapter;
+ import android.widget.Button;
+ import android.widget.EditText;
+ import android.widget.Spinner;
+ import android.widget.TextView;
+-import android.widget.Toast;
+ 
+-import com.example.jim.myapplication.Config.App;
++import com.example.jim.myapplication.R;
+ import com.example.jim.myapplication.model.MyInfo;
+ import com.example.jim.myapplication.utils.LogUtil;
+ 
+-import cn.bmob.v3.Bmob;
+-import cn.bmob.v3.exception.BmobException;
+-import cn.bmob.v3.listener.RequestSMSCodeListener;
+ import cn.bmob.v3.listener.SaveListener;
+ 
+ /**
+  * Created by jim on 2015/6/13.
+  */
+-public class RegisterActivity extends AppCompatActivity implements View.OnClickListener{
++public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
+     Spinner academy_spin;
+     EditText classText;
+     EditText nameText;
+@@ -33,6 +28,9 @@
+     EditText phoneText;
+     EditText passwordText;
+     Button mButton;
++
++    TextView goLogin;
++
+     @Override
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+@@ -41,7 +39,8 @@
+         setacdemySpin();
+         mButton.setOnClickListener(this);
+     }
++
+-    private void initWidget(){
++    private void initWidget() {
+         emailText = (EditText) findViewById(R.id.email_text);
+         academy_spin = (Spinner) findViewById(R.id.academy_spin);
+         classText = (EditText) findViewById(R.id.class_text);
+@@ -49,7 +48,10 @@
+         passwordText = (EditText) findViewById(R.id.password_text);
+         phoneText = (EditText) findViewById(R.id.phone_text);
+         mButton = (Button) findViewById(R.id.button);
++        goLogin = (TextView) findViewById(R.id.go_login);
++        goLogin.setOnClickListener(this);
+     }
++
+     private void setacdemySpin() {
+         String[] academies = getResources().getStringArray(R.array.academy);
+         ArrayAdapter<String> _Adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, academies);
+@@ -58,17 +60,22 @@
+ 
+     @Override
+     public void onClick(View v) {
+-        switch (v.getId()){
++        switch (v.getId()) {
+             case R.id.button:
+-                MyInfo info = new MyInfo();
++                final MyInfo info = new MyInfo();
++                info.setMyAcademy(academy_spin.getSelectedItem().toString());
++                info.setMyClass(classText.getText().toString());
+                 info.setUsername(nameText.getText().toString());
+                 info.setPassword(String.valueOf(passwordText.getText()));
+                 info.setMobilePhoneNumber(String.valueOf(phoneText.getText()));
++                if (emailText.getText().toString() != "")
+-                info.setEmail(emailText.getText().toString());
++                    info.setEmail(emailText.getText().toString());
+                 info.signUp(RegisterActivity.this, new SaveListener() {
+                     @Override
+                     public void onSuccess() {
+                         LogUtil.d("smile", "success");
++                        Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
++                        startActivity(intent);
+                     }
+ 
+                     @Override
+@@ -76,7 +83,13 @@
+                         LogUtil.e("smile", "fail" + s);
+                     }
+                 });
+-            break;
++                break;
++
++            case R.id.go_login:
++                Intent intent = new Intent(RegisterActivity.this, LoginActivity.class);
++                startActivity(intent);
++                break;
+         }
+     }
++
+ }
+Index: app/src/main/java/com/example/jim/myapplication/GuideActivity.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/GuideActivity.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/view/GuideActivity.java	(revision )
+@@ -1,20 +1,19 @@
+-package com.example.jim.myapplication;
++package com.example.jim.myapplication.view;
+ 
+ import android.content.Context;
+ import android.content.Intent;
+-import android.util.Log;
+ import android.view.ViewGroup.LayoutParams;
+ import android.content.SharedPreferences;
+ import android.os.Bundle;
+ import android.support.v4.view.ViewPager;
+ import android.support.v7.app.AppCompatActivity;
+-import android.view.LayoutInflater;
+ import android.view.Menu;
+ import android.view.View;
+ import android.widget.Button;
+ import android.widget.ImageView;
+ 
+ import com.example.jim.myapplication.Config.App;
++import com.example.jim.myapplication.R;
+ import com.example.jim.myapplication.utils.LogUtil;
+ import com.prolificinteractive.parallaxpager.ParallaxContainer;
+ import com.prolificinteractive.parallaxpager.ParallaxContextWrapper;
+@@ -40,7 +39,6 @@
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.activity_guide);
+-        Bmob.initialize(this, App.APPLICATION_ID);
+         ParallaxContainer parallaxContainer = (ParallaxContainer) findViewById(R.id.parallax_container_1);
+         parallaxContainer.setLooping(false);
+         parallaxContainer.setupChildren(getLayoutInflater(),
+@@ -52,11 +50,12 @@
+             @Override
+             public void onClick(View v) {
+                 LogUtil.d("guide", "exist");
+-                Intent mIntent = new Intent(GuideActivity.this, LoginActivity.class);
++                Intent mIntent = new Intent(GuideActivity.this, RegisterActivity.class);
++
++                GuideActivity.this.finish();
+                 startActivity(mIntent);
+             }
+         });
+-        LogUtil.d("guide", "ccc" + parallaxContainer.getScrollBarSize());
+         imageViews = new ImageView[3];
+         for (int i = 0; i < 3; i++) {
+             imageView = new ImageView(GuideActivity.this);
+@@ -75,23 +74,6 @@
+             parallaxContainer.setOnPageChangeListener(new GuidePageChangeListener());
+         }
+     }
+-        private static final String SHAREDPREFERENCES_NAME = "my_pref";
+-        private static final String KEY_GUIDE_ACTIVITY = "guide_activity";
+-
+-    private void setGuided() {
+-        SharedPreferences settings = getSharedPreferences(SHAREDPREFERENCES_NAME, 0);
+-        SharedPreferences.Editor editor = settings.edit();
+-        editor.putString(KEY_GUIDE_ACTIVITY, "false");
+-        editor.commit();
+-    }
+-
+-    @Override
+-    public boolean onCreateOptionsMenu(Menu menu) {
+-        // Inflate the menu; this adds items to the action bar if it is present.
+-        getMenuInflater().inflate(R.menu.menu_main, menu);
+-        return true;
+-    }
+-
+     class GuidePageChangeListener implements ViewPager.OnPageChangeListener {
+ 
+         @Override
+Index: app/src/main/res/layout/register.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/register.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/layout/register.xml	(revision )
+@@ -1,62 +1,74 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    android:orientation="vertical" android:layout_width="match_parent"
+-    android:layout_height="match_parent">
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    android:orientation="vertical">
+ 
+ 
+     <EditText
++        android:id="@+id/name_Text"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:inputType="textPersonName"
+-        android:hint="你的名字"
+         android:ems="10"
+-        android:id="@+id/name_Text" />
++        android:hint="你的名字"
++        android:inputType="textPersonName" />
+ 
+     <EditText
+         android:id="@+id/phone_text"
+-        android:hint="你的号码"
+         android:layout_width="match_parent"
+-        android:layout_height="wrap_content" />
++        android:layout_height="wrap_content"
++        android:hint="你的号码" />
++
+     <Spinner
++        android:id="@+id/academy_spin"
+         android:layout_width="match_parent"
+-        android:layout_height="wrap_content"
+-        android:id="@+id/academy_spin" />
++        android:layout_height="wrap_content" />
+ 
+     <EditText
++        android:id="@+id/class_text"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:hint="你的班级"
+-        android:id="@+id/class_text"/>
++        android:hint="你的班级" />
+ 
+ 
+     <EditText
++        android:id="@+id/password_text"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+-        android:inputType="textPassword"
+         android:ems="10"
+         android:hint="密码"
+-        android:id="@+id/password_text" />
++        android:inputType="textPassword" />
++
+     <LinearLayout
+-        android:layout_width="wrap_content"
+-        android:layout_height="wrap_content"
+-        android:orientation="horizontal">
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content">
++
+         <TextView
+-            android:textSize="30dp"
++            android:textColor="@color/Orange"
++            android:text="选填"
+             android:layout_width="wrap_content"
+-            android:layout_height="wrap_content"
+-            android:text="选填"/>
++            android:layout_height="wrap_content" />
++
+         <EditText
++            android:id="@+id/email_text"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:ems="10"
+-            android:hint="输入邮箱用于验证"
+-            android:id="@+id/email_text" />
++            android:hint="输入邮箱用于验证" />
+     </LinearLayout>
++
+     <Button
++        android:id="@+id/button"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+-        android:text="submit"
+-        android:id="@+id/button"
+-        android:layout_gravity="center_horizontal" />
++        android:layout_gravity="center_horizontal"
++        android:text="submit" />
++
++    <TextView
++        android:id="@+id/go_login"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:text="直接登录"
++        android:textColor="@color/DeepPurple" />
+ 
+ </LinearLayout>
+\ No newline at end of file
+Index: app/src/main/res/drawable/photo_choose_bg.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_choose_bg.xml	(revision )
++++ app/src/main/res/drawable/photo_choose_bg.xml	(revision )
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android" >
++
++    <solid android:color="#00000000" />
++
++    <corners android:radius="20dip" />
++
++    <padding
++        android:bottom="5dp"
++        android:left="5dp"
++        android:right="5dp"
++        android:top="5dp" />
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/view/MyClassViewHolder.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/MyClassViewHolder.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/MyClassViewHolder.java	(revision )
+@@ -0,0 +1,51 @@
++package com.example.jim.myapplication.view;
++
++import android.graphics.Bitmap;
++import android.net.Uri;
++import android.support.v7.widget.CardView;
++import android.view.View;
++import android.view.ViewGroup;
++import android.view.ViewStub;
++import android.widget.TextView;
++
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.MyClassMate;
++import com.example.jim.myapplication.utils.LogUtil;
++import com.facebook.drawee.view.SimpleDraweeView;
++import com.jude.easyrecyclerview.adapter.BaseViewHolder;
++
++
++/**
++ * Created by jim on 2015/8/7.
++ */
++public class MyClassViewHolder extends BaseViewHolder<MyClassMate> {
++    private SimpleDraweeView mImg_face;
++    private ViewStub stub;
++    private TextView mTextView1;
++    private TextView mTextView2;
++
++    public MyClassViewHolder(ViewGroup parent) {
++        super(parent, R.layout.item_myclassmate);
++        stub = (ViewStub) itemView.findViewById(R.id.viewstub_phone_no);
++        stub.inflate();
++        mImg_face = (SimpleDraweeView) itemView.findViewById(R.id.head_pic);
++        mTextView1 = (TextView) itemView.findViewById(R.id.phone_no);
++        mTextView2 = (TextView) itemView.findViewById(R.id.classmate_name);
++    }
++
++    @Override
++    public void setData(MyClassMate classMate) {
++        String imageUrl = classMate.getImagUrl();
++        String phoneNo = classMate.getPhoneNo();
++        String classmateName = classMate.getClassmateName();
++        LogUtil.i("face_data", classmateName+" "+imageUrl);
++
++        if(!imageUrl.equals("")) {
++            mImg_face.setImageURI(Uri.parse(imageUrl));
++        }else {
++            mImg_face.setImageResource(R.drawable.head_portrait);
++        }
++        mTextView1.setText(phoneNo);
++        mTextView2.setText(classmateName);
++    }
++}
+Index: app/src/main/java/com/example/jim/myapplication/view/MainActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/MainActivity.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/MainActivity.java	(revision )
+@@ -0,0 +1,307 @@
++package com.example.jim.myapplication.view;
++
++import android.app.Dialog;
++import android.app.ProgressDialog;
++import android.content.Intent;
++import android.graphics.Bitmap;
++import android.net.Uri;
++import android.os.Bundle;
++import android.support.design.widget.Snackbar;
++import android.support.v4.app.Fragment;
++import android.support.v4.app.FragmentManager;
++import android.support.v7.widget.Toolbar;
++import android.view.Menu;
++import android.view.MenuItem;
++import android.view.View;
++import android.view.ViewGroup;
++import android.view.Window;
++import android.view.WindowManager;
++
++import br.liveo.Model.HelpLiveo;
++import br.liveo.interfaces.OnItemClickListener;
++import br.liveo.interfaces.OnPrepareOptionsMenuLiveo;
++import br.liveo.navigationliveo.NavigationActionBarLiveo;
++import cn.bmob.push.BmobPush;
++import cn.bmob.v3.BmobInstallation;
++import cn.bmob.v3.BmobUser;
++import cn.bmob.v3.datatype.BmobFile;
++import cn.bmob.v3.listener.UpdateListener;
++import cn.bmob.v3.listener.UploadFileListener;
++
++import android.view.ViewGroup.LayoutParams;
++import android.widget.Button;
++
++import com.android.volley.RequestQueue;
++import com.android.volley.Response;
++import com.android.volley.VolleyError;
++import com.android.volley.toolbox.ImageRequest;
++import com.android.volley.toolbox.Volley;
++import com.bmob.BmobProFile;
++import com.example.jim.myapplication.Config.App;
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.MyInfo;
++import com.example.jim.myapplication.utils.LogUtil;
++import com.jude.library.imageprovider.ImageProvider;
++import com.jude.library.imageprovider.OnImageSelectListener;
++
++import java.io.File;
++
++public class MainActivity extends NavigationActionBarLiveo implements OnItemClickListener, View.OnClickListener, OnImageSelectListener {
++    private HelpLiveo mHelpLiveo;
++    private ProgressDialog progressDialog;
++    private Dialog dialog;
++    private Button takePhoto;
++    private Button fromAlbum;
++    private Button cancel;
++    private ImageProvider provider;
++    public static MyInfo user;
++
++    @Override
++    public void onInt(Bundle bundle) {
++        setToolbar();
++        initReceiver();
++        user = BmobUser.getCurrentUser(this, MyInfo.class);
++        this.userName.setText(user.getUsername());
++        this.userEmail.setText(user.getMobilePhoneNumber());
++        setPrePhoto();
++        this.userPhoto.setImageResource(R.drawable.head_portrait);
++        this.userPhoto.setOnLongClickListener(new View.OnLongClickListener() {
++            @Override
++            public boolean onLongClick(View v) {
++                showDialog();
++                return true;
++            }
++        });
++        mHelpLiveo = new HelpLiveo();
++        mHelpLiveo.add("班级查找");
++        mHelpLiveo.add("社团查找");
++        mHelpLiveo.add("我的社团");
++
++        with(this).startingPosition(0) //Starting position in the list
++                .addAllHelpItem(mHelpLiveo.getHelp())
++                .footerItem("设置", R.layout.abc_list_menu_item_icon)
++                .setOnClickUser(onClickPhoto)
++                .setOnPrepareOptionsMenu(onPrepare)
++                .setOnClickFooter(onClickFooter)
++                .build();
++    }
++
++    private void setToolbar(){
++        Toolbar.OnMenuItemClickListener onMenuItemClick = new Toolbar.OnMenuItemClickListener() {
++            @Override
++            public boolean onMenuItemClick(MenuItem item) {
++                switch (item.getItemId()){
++                    case R.id.action_share:
++                        View view = findViewById(R.id.container);
++                        Snackbar snackbar = Snackbar.make(view, "好像暂时没什么用", Snackbar.LENGTH_SHORT);
++                        snackbar.show();
++                        break;
++                }
++                return true;
++            }
++        };
++        getToolbar().setOnMenuItemClickListener(onMenuItemClick);
++    }
++
++    private void setPrePhoto(){
++        String picUri = "", picName = "";
++        picUri = user.getPicUri();
++        if (picUri != "" && picUri != null){
++            picName = user.getPicName();
++            String URL = BmobProFile.getInstance(this).signURL(picName,picUri, App.ACCESS_KEY,0,null);
++            RequestQueue mQueue = Volley.newRequestQueue(this);
++            ImageRequest imageRequest = new ImageRequest(
++                    URL,
++                    new Response.Listener<Bitmap>() {
++                        @Override
++                        public void onResponse(Bitmap response) {
++                            userPhoto.setImageBitmap(response);
++                        }
++                    }, 0, 0, Bitmap.Config.RGB_565, new Response.ErrorListener() {
++                @Override
++                public void onErrorResponse(VolleyError error) {
++                }
++            });
++            mQueue.add(imageRequest);
++        }
++        else{
++            this.userPhoto.setImageResource(R.drawable.head_portrait);
++        }
++    }
++
++    private void showDialog() {
++        LogUtil.e("smile", "run");
++        View view = getLayoutInflater().inflate(R.layout.photo_choose_dialog,
++                null);
++        takePhoto = (Button) view.findViewById(R.id.take_photo);
++        fromAlbum = (Button) view.findViewById(R.id.album);
++        cancel = (Button) view.findViewById(R.id.cancel);
++        takePhoto.setOnClickListener(this);
++        fromAlbum.setOnClickListener(this);
++        cancel.setOnClickListener(this);
++
++        dialog = new Dialog(this, R.style.transparentFrameWindowStyle);
++        dialog.setContentView(view, new LayoutParams(LayoutParams.FILL_PARENT,
++                LayoutParams.WRAP_CONTENT));
++        Window window = dialog.getWindow();
++        // 设置显示动画
++        window.setWindowAnimations(R.style.main_menu_animstyle);
++        WindowManager.LayoutParams wl = window.getAttributes();
++        wl.x = 0;
++        wl.y = getWindowManager().getDefaultDisplay().getHeight();
++        // 以下这两句是为了保证按钮可以水平满屏
++        wl.width = ViewGroup.LayoutParams.MATCH_PARENT;
++        wl.height = ViewGroup.LayoutParams.WRAP_CONTENT;
++
++        // 设置显示位置
++        dialog.onWindowAttributesChanged(wl);
++        // 设置点击外围解散
++        dialog.setCanceledOnTouchOutside(true);
++        dialog.show();
++    }
++
++    public void initFragmentManager(Fragment fragment){
++        FragmentManager mFragmentManager = getSupportFragmentManager();
++        mFragmentManager.beginTransaction().replace(R.id.container, fragment).commit();
++    }
++    public void onItemClick(int i) {
++        switch (i){
++            case 0:
++                initFragmentManager(MyClassFragment.getInstance());
++                break;
++            case 1:
++                initFragmentManager(OrgFragment.getInstance());
++                break;
++            case 2:
++                initFragmentManager(MyOrganizationFragment.getInstance());
++                break;
++        }
++    }
++
++    private OnPrepareOptionsMenuLiveo onPrepare = new OnPrepareOptionsMenuLiveo() {
++        @Override
++        public void onPrepareOptionsMenu(Menu menu, int position, boolean visible) {
++        }
++    };
++
++    private View.OnClickListener onClickPhoto = new View.OnClickListener() {
++        @Override
++        public void onClick(View v) {
++            Intent intent = new Intent(MainActivity.this, setInformationActivity.class);
++            startActivity(intent);
++        }
++    };
++
++    private View.OnClickListener onClickFooter = new View.OnClickListener() {
++        @Override
++        public void onClick(View v) {
++            closeDrawer();
++        }
++    };
++
++    @Override
++    public void onClick(View v) {
++        provider = new ImageProvider(this);
++        switch (v.getId()) {
++            case R.id.take_photo:
++                dialog.cancel();
++                provider.getImageFromCamera(this);
++                LogUtil.i("test", "onClick");
++                break;
++
++            case R.id.album:
++                dialog.cancel();
++                provider.getImageFromAlbum(this);
++                break;
++
++            case R.id.cancel:
++                dialog.cancel();
++                break;
++            default:
++                break;
++        }
++    }
++
++    private void uploadPic(final Uri imageUri){
++        LogUtil.e("test", "..."+imageUri.getPath());
++        final File file = new File(imageUri.getPath());
++        LogUtil.e("file", "...." + file);
++        final BmobFile bmobFile = new BmobFile(file);
++        bmobFile.uploadblock(this, new UploadFileListener() {
++            @Override
++            public void onSuccess() {
++                user.setPicName(bmobFile.getFilename());
++                user.setPicUri(bmobFile.getFileUrl(MainActivity.this));
++                user.update(MainActivity.this, user.getObjectId(), new UpdateListener() {
++                    @Override
++                    public void onSuccess() {
++                        LogUtil.i("user", "成功");
++                    }
++
++                    @Override
++                    public void onFailure(int i, String s) {
++                        LogUtil.i("user", "shi" +s);
++                    }
++                });
++            }
++
++            @Override
++            public void onFailure(int i, String s) {
++
++            }
++        });
++    }
++
++    @Override
++    public void onImageSelect() {
++        progressDialog = new ProgressDialog(this);
++        progressDialog.show();
++        LogUtil.i("test", "onImageSelect");
++    }
++
++    @Override
++    public void onImageLoaded(Uri uri) {
++        progressDialog.dismiss();
++        provider.corpImage(uri, 300, 300, new OnImageSelectListener() {
++            @Override
++            public void onImageSelect() {
++                LogUtil.i("test", "onImageSelect");
++            }
++
++            @Override
++            public void onImageLoaded(Uri uric) {
++                LogUtil.i("test", uric.toString());
++                userPhoto.setImageURI(uric);
++                uploadPic(uric);
++            }
++
++            @Override
++            public void onError() {
++                LogUtil.i("test", "onerror");
++                dialog.dismiss();
++            }
++
++        });
++    }
++    @Override
++    public void onError() {
++
++    }
++
++    public void initReceiver(){
++        // 使用推送服务时的初始化操作
++        BmobInstallation.getCurrentInstallation(this).save();
++        // 启动推送服务
++        BmobPush.startWork(this, App.APPLICATION_ID);
++    }
++
++    public boolean onCreateOptionsMenu(Menu menu) {
++        getMenuInflater().inflate(R.menu.menu_main, menu);
++        return true;
++    }
++
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        super.onActivityResult(requestCode, resultCode, data);
++        provider.onActivityResult(requestCode, resultCode, data);
++    }
++}
+Index: app/src/main/java/com/example/jim/myapplication/LoginActivity.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/LoginActivity.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/view/LoginActivity.java	(revision )
+@@ -1,13 +1,19 @@
+-package com.example.jim.myapplication;
++package com.example.jim.myapplication.view;
+ 
+ import android.content.Intent;
++import android.content.SharedPreferences;
+ import android.os.Bundle;
+ import android.support.v7.app.AppCompatActivity;
+ import android.view.View;
+ import android.widget.Button;
++import android.widget.EditText;
++import android.widget.TextView;
+ 
++import com.example.jim.myapplication.Config.App;
++import com.example.jim.myapplication.R;
+ import com.example.jim.myapplication.utils.LogUtil;
+ 
++import cn.bmob.v3.Bmob;
+ import cn.bmob.v3.BmobUser;
+ import cn.bmob.v3.listener.SaveListener;
+ 
+@@ -15,24 +21,33 @@
+  * Created by jim on 2015/6/14.
+  */
+ public class LoginActivity extends AppCompatActivity{
++    EditText userName;
++    EditText password;
+     Button mButton;
+     BmobUser bu2;
++
++    TextView forget;
+     protected void onCreate(Bundle savedInstanceState) {
+         super.onCreate(savedInstanceState);
+         setContentView(R.layout.login);
++        userName = (EditText) findViewById(R.id.user_name);
++        password = (EditText) findViewById(R.id.password);
++        forget = (TextView) findViewById(R.id.forget);
+         bu2 = new BmobUser();
+-        bu2.setUsername("lucky");
+-        bu2.setPassword("123456");
+         mButton = (Button) findViewById(R.id.login);
+         mButton.setOnClickListener(new View.OnClickListener() {
+             @Override
+             public void onClick(View v) {
++                bu2.setUsername(String.valueOf(userName.getText()));
++                bu2.setPassword(String.valueOf(password.getText()));
+                 bu2.login(LoginActivity.this, new SaveListener() {
+                     @Override
+                     public void onSuccess() {
+                         // TODO Auto-generated method stub
+                         LogUtil.d("Login", "success");
++                        setGuided();
+                         Intent mIntent = new Intent(LoginActivity.this, MainActivity.class);
++                        startActivity(mIntent);
+                     }
+ 
+                     @Override
+@@ -43,5 +58,22 @@
+                 });
+             }
+         });
++
++        forget.setOnClickListener(new View.OnClickListener() {
++            @Override
++            public void onClick(View v) {
++
++            }
++        });
++    }
++
++    private static final String SHAREDPREFERENCES_NAME = "my_pref";
++    private static final String KEY_GUIDE_ACTIVITY = "guide_activity";
++
++    private void setGuided() {
++        SharedPreferences settings = getSharedPreferences(SHAREDPREFERENCES_NAME, 0);
++        SharedPreferences.Editor editor = settings.edit();
++        editor.putString(KEY_GUIDE_ACTIVITY, "false");
++        editor.commit();
+     }
+ }
+Index: app/src/main/java/com/example/jim/myapplication/view/MyOrgActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/view/MyOrgActivity.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/view/MyOrgActivity.java	(revision )
+@@ -0,0 +1,234 @@
++package com.example.jim.myapplication.view;
++
++import android.app.Activity;
++import android.content.Intent;
++import android.net.Uri;
++import android.support.v7.app.AppCompatActivity;
++import android.os.Bundle;
++import android.text.InputType;
++import android.view.Menu;
++import android.view.MenuItem;
++import android.view.View;
++import android.widget.Button;
++import android.widget.CheckBox;
++import android.widget.ImageView;
++
++import com.example.jim.myapplication.Adapter.OrgAdapter;
++import com.example.jim.myapplication.R;
++import com.example.jim.myapplication.model.Organization;
++import com.example.jim.myapplication.utils.BmobUtil.BmobTableUtil;
++import com.jude.library.imageprovider.ImageProvider;
++import com.jude.library.imageprovider.OnImageSelectListener;
++import com.rengwuxian.materialedittext.MaterialEditText;
++
++import java.io.File;
++
++import cn.bmob.v3.BmobPushManager;
++import cn.bmob.v3.datatype.BmobFile;
++import cn.bmob.v3.listener.UpdateListener;
++import cn.bmob.v3.listener.UploadFileListener;
++
++public class MyOrgActivity extends AppCompatActivity implements View.OnClickListener{
++    ImageView orgPic;
++    MaterialEditText baseText;
++    MaterialEditText speciText;
++    Organization org;
++    Button choosePic;
++    CheckBox isShow;
++    Button submit;
++
++    ImageProvider provider;
++
++    private Boolean hasPreOrg = false;
++    private Boolean isSetOrg = false;
++
++    private Activity activity;
++
++    private Organization setOrg = new Organization();
++
++    private BmobPushManager pushManager;
++
++    @Override
++    protected void onCreate(Bundle savedInstanceState) {
++        super.onCreate(savedInstanceState);
++        setContentView(R.layout.activity_my_org);
++        activity = this;
++        getOrg();
++        initView();
++        setView();
++        provider = new ImageProvider(this);
++        pushManager = new BmobPushManager(this);
++    }
++
++    private void getOrg() {
++        Intent intent = getIntent();
++        org = (Organization) intent.getSerializableExtra("MyOrg");
++    }
++
++    private void setView() {
++        if (org.getOrgPic() == null){
++            orgPic.setImageResource(R.drawable.without_pic);
++        }else{
++            hasPreOrg = true;
++            org.getOrgPic().loadImage(this, orgPic);
++        }
++        if (org.getBaseIntro() != null && org.getBaseIntro().length() != 0){
++            baseText.setText(org.getBaseIntro());
++        }
++        if (org.getSpecificIntro() != null && org.getSpecificIntro().length() != 0){
++            speciText.setText(org.getSpecificIntro());
++        }
++        if (org.getIsShow() != null){
++            isShow.setChecked(org.getIsShow());
++        }
++
++        choosePic.setOnClickListener(this);
++        editTextGetResult();
++        submit.setOnClickListener(this);
++        orgPic.setOnClickListener(this);
++    }
++
++    private void editTextGetResult() {
++        baseText.setOnClickListener(this);
++        speciText.setOnClickListener(this);
++        baseText.setInputType(InputType.TYPE_NULL);
++        speciText.setInputType(InputType.TYPE_NULL);
++    }
++
++    void initView(){
++        orgPic = (ImageView) findViewById(R.id.org_pic);
++        baseText = (MaterialEditText) findViewById(R.id.base_intro);
++        speciText = (MaterialEditText) findViewById(R.id.specific_intro);
++        choosePic = (Button) findViewById(R.id.more_pic);
++        isShow = (CheckBox) findViewById(R.id.is_show);
++        submit = (Button) findViewById(R.id.submit);
++    }
++
++    @Override
++    public void onClick(View v) {
++        switch (v.getId()){
++            case R.id.base_intro:
++                Intent mIntent1 = new Intent(MyOrgActivity.this, TextActivity.class);
++                startActivityForResult(mIntent1, 1);
++                break;
++
++            case R.id.specific_intro:
++                Intent mIntent2 = new Intent(MyOrgActivity.this, TextActivity.class);
++                startActivityForResult(mIntent2, 2);
++                break;
++
++            case R.id.submit:
++                setOrg.setBaseIntro(baseText.getText().toString());
++                setOrg.setSpecificIntro(speciText.getText().toString());
++                setOrg.setIsShow(isShow.isChecked());
++                if (isSetOrg){
++                    if (hasPreOrg){
++                        BmobFile bmobFile = new BmobFile();
++                        bmobFile.setUrl(org.getUri());
++                        bmobFile.delete(this);
++                    }
++                    setOrg.getOrgPic().uploadblock(this, new UploadFileListener() {
++                        @Override
++                        public void onSuccess() {
++                            setOrg.update(activity, org.getObjectId(), new UpdateListener() {
++                                @Override
++                                public void onSuccess() {
++                                    finish();
++                                }
++
++                                @Override
++                                public void onFailure(int i, String s) {
++
++                                }
++                            });
++                        }
++
++                        @Override
++                        public void onFailure(int i, String s) {
++
++                        }
++                    });
++                }else {
++                    setOrg.update(activity, org.getObjectId(), new UpdateListener() {
++                        @Override
++                        public void onSuccess() {
++                            if (setOrg.getIsShow() == true && org.getIsShow() == false) {
++                                pushManager.pushMessageAll(org.getOrgName()+"登陆了 ！！");
++                            }
++                            finish();
++                        }
++
++                        @Override
++                        public void onFailure(int i, String s) {
++
++                        }
++                    });
++                }
++                break;
++
++            case R.id.org_pic:
++                provider.getImageFromAlbum(new OnImageSelectListener() {
++                    @Override
++                    public void onImageSelect() {
++
++                    }
++
++                    @Override
++                    public void onImageLoaded(Uri uri) {
++                        provider.corpImage(uri, 300, 300, new OnImageSelectListener() {
++                            @Override
++                            public void onImageSelect() {
++
++                            }
++
++                            @Override
++                            public void onImageLoaded(Uri uri) {
++                                orgPic.setImageURI(uri);
++                                File file = new File(uri.getPath());
++                                BmobFile bmobFile = new BmobFile(file);
++                                setOrg.setOrgPic(bmobFile);
++                                isSetOrg = true;
++                            }
++
++                            @Override
++                            public void onError() {
++
++                            }
++                        });
++                    }
++
++                    @Override
++                    public void onError() {
++
++                    }
++                });
++                break;
++
++            case R.id.more_pic:
++                Intent intent = new Intent(this, OrgPicsActivity.class);
++                intent.putExtra("orgname", org.getOrgName());
++                startActivity(intent);
++        }
++    }
++
++    @Override
++    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
++        super.onActivityResult(requestCode, resultCode, data);
++        provider.onActivityResult(requestCode, resultCode, data);
++        switch (requestCode){
++            case 1:
++                if (resultCode == RESULT_OK){
++                    String returnBaseData = data.getStringExtra("data_return");
++                    baseText.setText(returnBaseData);
++                }
++                break;
++
++            case 2:
++                if (resultCode == RESULT_OK){
++                    String returnSpeciData = data.getStringExtra("data_return");
++                    speciText.setText(returnSpeciData);
++                }
++                break;
++        }
++    }
++}
+Index: app/src/main/java/com/example/jim/myapplication/MainActivity.java
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/MainActivity.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/java/com/example/jim/myapplication/MainActivity.java	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
+@@ -1,145 +0,0 @@
+-package com.example.jim.myapplication;
+-
+-import android.app.Activity;
+-import android.support.v7.app.ActionBarActivity;
+-import android.support.v7.app.ActionBar;
+-import android.support.v4.app.Fragment;
+-import android.support.v4.app.FragmentManager;
+-import android.os.Bundle;
+-import android.support.v7.app.AppCompatActivity;
+-import android.view.LayoutInflater;
+-import android.view.Menu;
+-import android.view.MenuItem;
+-import android.view.View;
+-import android.view.ViewGroup;
+-import android.support.v4.widget.DrawerLayout;
+-
+-
+-public class MainActivity extends AppCompatActivity
+-        implements NavigationDrawerFragment.NavigationDrawerCallbacks {
+-
+-    /**
+-     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
+-     */
+-    private NavigationDrawerFragment mNavigationDrawerFragment;
+-
+-    /**
+-     * Used to store the last screen title. For use in {@link #restoreActionBar()}.
+-     */
+-    private CharSequence mTitle;
+-
+-    @Override
+-    protected void onCreate(Bundle savedInstanceState) {
+-        super.onCreate(savedInstanceState);
+-        setContentView(R.layout.activity_main);
+-
+-        mNavigationDrawerFragment = (NavigationDrawerFragment)
+-                getSupportFragmentManager().findFragmentById(R.id.navigation_drawer);
+-        mTitle = getTitle();
+-
+-        // Set up the drawer.
+-        mNavigationDrawerFragment.setUp(
+-                R.id.navigation_drawer,
+-                (DrawerLayout) findViewById(R.id.drawer_layout));
+-    }
+-
+-    @Override
+-    public void onNavigationDrawerItemSelected(int position) {
+-        // update the main content by replacing fragments
+-        FragmentManager fragmentManager = getSupportFragmentManager();
+-        fragmentManager.beginTransaction()
+-                .replace(R.id.container, PlaceholderFragment.newInstance(position + 1))
+-                .commit();
+-    }
+-
+-    public void onSectionAttached(int number) {
+-        switch (number) {
+-            case 1:
+-                mTitle = getString(R.string.title_section1);
+-                break;
+-            case 2:
+-                mTitle = getString(R.string.title_section2);
+-                break;
+-            case 3:
+-                mTitle = getString(R.string.title_section3);
+-                break;
+-        }
+-    }
+-
+-    public void restoreActionBar() {
+-        ActionBar actionBar = getSupportActionBar();
+-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_STANDARD);
+-        actionBar.setDisplayShowTitleEnabled(true);
+-        actionBar.setTitle(mTitle);
+-    }
+-
+-
+-    @Override
+-    public boolean onCreateOptionsMenu(Menu menu) {
+-        if (!mNavigationDrawerFragment.isDrawerOpen()) {
+-            // Only show items in the action bar relevant to this screen
+-            // if the drawer is not showing. Otherwise, let the drawer
+-            // decide what to show in the action bar.
+-            getMenuInflater().inflate(R.menu.main, menu);
+-            restoreActionBar();
+-            return true;
+-        }
+-        return super.onCreateOptionsMenu(menu);
+-    }
+-
+-    @Override
+-    public boolean onOptionsItemSelected(MenuItem item) {
+-        // Handle action bar item clicks here. The action bar will
+-        // automatically handle clicks on the Home/Up button, so long
+-        // as you specify a parent activity in AndroidManifest.xml.
+-        int id = item.getItemId();
+-
+-        //noinspection SimplifiableIfStatement
+-        if (id == R.id.action_settings) {
+-            return true;
+-        }
+-
+-        return super.onOptionsItemSelected(item);
+-    }
+-
+-    /**
+-     * A placeholder fragment containing a simple view.
+-     */
+-    public static class PlaceholderFragment extends Fragment {
+-        /**
+-         * The fragment argument representing the section number for this
+-         * fragment.
+-         */
+-        private static final String ARG_SECTION_NUMBER = "section_number";
+-
+-        /**
+-         * Returns a new instance of this fragment for the given section
+-         * number.
+-         */
+-        public static PlaceholderFragment newInstance(int sectionNumber) {
+-            PlaceholderFragment fragment = new PlaceholderFragment();
+-            Bundle args = new Bundle();
+-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+-            fragment.setArguments(args);
+-            return fragment;
+-        }
+-
+-        public PlaceholderFragment() {
+-        }
+-
+-        @Override
+-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
+-                                 Bundle savedInstanceState) {
+-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+-            return rootView;
+-        }
+-
+-        @Override
+-        public void onAttach(Activity activity) {
+-            super.onAttach(activity);
+-            ((MainActivity) activity).onSectionAttached(
+-                    getArguments().getInt(ARG_SECTION_NUMBER));
+-        }
+-    }
+-
+-}
+Index: app/src/main/res/layout/activity_text.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/activity_text.xml	(revision )
++++ app/src/main/res/layout/activity_text.xml	(revision )
+@@ -0,0 +1,19 @@
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:orientation="vertical"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    tools:context="com.example.jim.myapplication.view.TextActivity">
++
++    <Button
++        android:id="@+id/back"
++        android:text="完成"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content" />
++
++    <EditText
++        android:id="@+id/edit"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent" />
++
++</LinearLayout>
+Index: app/src/main/java/com/example/jim/myapplication/Image3D/Image3DSwitchView.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/Image3D/Image3DSwitchView.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/Image3D/Image3DSwitchView.java	(revision )
+@@ -0,0 +1,364 @@
++package com.example.jim.myapplication.Image3D;
++
++import android.content.Context;
++import android.os.Handler;
++import android.util.AttributeSet;
++import android.view.MotionEvent;
++import android.view.VelocityTracker;
++import android.view.ViewConfiguration;
++import android.view.ViewGroup;
++import android.widget.Scroller;
++
++/**
++ * Created by jim on 2015/8/18.
++ */
++public class Image3DSwitchView extends ViewGroup {
++
++    /**
++     * 图片左右两边的空白间距
++     */
++    public static final int IMAGE_PADDING = 10;
++    private static final int TOUCH_STATE_REST = 0;
++    private static final int TOUCH_STATE_SCROLLING = 1;
++    /**
++     * 滚动到下一张图片的速度
++     */
++    private static final int SNAP_VELOCITY = 600;
++    /**
++     * 表示滚动到下一张图片这个动作
++     */
++    private static final int SCROLL_NEXT = 0;
++    /**
++     * 表示滚动到上一张图片这个动作
++     */
++    private static final int SCROLL_PREVIOUS = 1;
++    /**
++     * 表示滚动回原图片这个动作
++     */
++    private static final int SCROLL_BACK = 2;
++    private static Handler handler = new Handler();
++    /**
++     * 控件宽度
++     */
++    public static int mWidth;
++    private VelocityTracker mVelocityTracker;
++    private Scroller mScroller;
++    /**
++     * 图片滚动监听器，当图片发生滚动时回调这个接口
++     */
++    private OnImageSwitchListener mListener;
++    /**
++     * 记录当前的触摸状态
++     */
++    private int mTouchState = TOUCH_STATE_REST;
++    /**
++     * 记录被判定为滚动运动的最小滚动值
++     */
++    private int mTouchSlop;
++    /**
++     * 记录控件高度
++     */
++    private int mHeight;
++    /**
++     * 记录每张图片的宽度
++     */
++    private int mImageWidth;
++    /**
++     * 记录图片的总数量
++     */
++    private int mCount;
++    /**
++     * 记录当前显示图片的坐标
++     */
++    private int mCurrentImage;
++    /**
++     * 记录上次触摸的横坐标值
++     */
++    private float mLastMotionX;
++    /**
++     * 是否强制重新布局
++     */
++    private boolean forceToRelayout;
++    private int[] mItems;
++
++    public Image3DSwitchView(Context context, AttributeSet attrs) {
++        super(context, attrs);
++        mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
++        mScroller = new Scroller(context);
++    }
++
++    @Override
++    protected void onLayout(boolean changed, int l, int t, int r, int b) {
++        if (changed || forceToRelayout) {
++            mCount = getChildCount();
++            // 图片数量必须大于5，不然无法正常显示
++            if (mCount < 5) {
++                return;
++            }
++            mWidth = getMeasuredWidth();
++            mHeight = getMeasuredHeight();
++            // 每张图片的宽度设定为控件宽度的百分之六十
++            mImageWidth = (int) (mWidth * 0.6);
++            if (mCurrentImage >= 0 && mCurrentImage < mCount) {
++                mScroller.abortAnimation();
++                setScrollX(0);
++                int left = -mImageWidth * 2 + (mWidth - mImageWidth) / 2;
++                // 分别获取每个位置上应该显示的图片下标
++                int[] items = { getIndexForItem(1), getIndexForItem(2),
++                        getIndexForItem(3), getIndexForItem(4),
++                        getIndexForItem(5) };
++                mItems = items;
++                // 通过循环为每张图片设定位置
++                for (int i = 0; i < items.length; i++) {
++                    Image3DView childView = (Image3DView) getChildAt(items[i]);
++                    childView.layout(left + IMAGE_PADDING, 0, left
++                            + mImageWidth - IMAGE_PADDING, mHeight);
++                    childView.initImageViewBitmap();
++                    left = left + mImageWidth;
++                }
++                refreshImageShowing();
++            }
++            forceToRelayout = false;
++        }
++    }
++
++    @Override
++    public boolean onTouchEvent(MotionEvent event) {
++        if (mScroller.isFinished()) {
++            if (mVelocityTracker == null) {
++                mVelocityTracker = VelocityTracker.obtain();
++            }
++            mVelocityTracker.addMovement(event);
++            int action = event.getAction();
++            float x = event.getX();
++            switch (action) {
++                case MotionEvent.ACTION_DOWN:
++                    // 记录按下时的横坐标
++                    mLastMotionX = x;
++                    break;
++                case MotionEvent.ACTION_MOVE:
++                    int disX = (int) (mLastMotionX - x);
++                    mLastMotionX = x;
++                    scrollBy(disX, 0);
++                    // 当发生移动时刷新图片的显示状态
++                    refreshImageShowing();
++                    break;
++                case MotionEvent.ACTION_UP:
++                    mVelocityTracker.computeCurrentVelocity(1000);
++                    int velocityX = (int) mVelocityTracker.getXVelocity();
++                    if (shouldScrollToNext(velocityX)) {
++                        // 滚动到下一张图
++                        scrollToNext();
++                    } else if (shouldScrollToPrevious(velocityX)) {
++                        // 滚动到上一张图
++                        scrollToPrevious();
++                    } else {
++                        // 滚动回当前图片
++                        scrollBack();
++                    }
++                    if (mVelocityTracker != null) {
++                        mVelocityTracker.recycle();
++                        mVelocityTracker = null;
++                    }
++                    break;
++            }
++        }
++        return true;
++    }
++
++    /**
++     * 根据当前的触摸状态来决定是否屏蔽子控件的交互能力。
++     */
++    @Override
++    public boolean onInterceptTouchEvent(MotionEvent ev) {
++        int action = ev.getAction();
++        if ((action == MotionEvent.ACTION_MOVE)
++                && (mTouchState != TOUCH_STATE_REST)) {
++            return true;
++        }
++        float x = ev.getX();
++        switch (action) {
++            case MotionEvent.ACTION_DOWN:
++                mLastMotionX = x;
++                mTouchState = TOUCH_STATE_REST;
++                break;
++            case MotionEvent.ACTION_MOVE:
++                int xDiff = (int) Math.abs(mLastMotionX - x);
++                if (xDiff > mTouchSlop) {
++                    mTouchState = TOUCH_STATE_SCROLLING;
++                }
++                break;
++            case MotionEvent.ACTION_UP:
++            default:
++                mTouchState = TOUCH_STATE_REST;
++                break;
++        }
++        return mTouchState != TOUCH_STATE_REST;
++    }
++
++    @Override
++    public void computeScroll() {
++        if (mScroller.computeScrollOffset()) {
++            scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
++            refreshImageShowing();
++            postInvalidate();
++        }
++    }
++
++    /**
++     * 设置图片滚动的监听器，每当有图片滚动时会回调此接口。
++     *
++     * @param listener
++     *            图片滚动监听器
++     */
++    public void setOnImageSwitchListener(OnImageSwitchListener listener) {
++        mListener = listener;
++    }
++
++    /**
++     * 设置当前显示图片的下标，注意如果该值小于零或大于等于图片的总数量，图片则无法正常显示。
++     *
++     * @param currentImage
++     *            图片的下标
++     */
++    public void setCurrentImage(int currentImage) {
++        mCurrentImage = currentImage;
++        requestLayout();
++    }
++
++    /**
++     * 滚动到下一张图片。
++     */
++    public void scrollToNext() {
++        if (mScroller.isFinished()) {
++            int disX = mImageWidth - getScrollX();
++            checkImageSwitchBorder(SCROLL_NEXT);
++            if (mListener != null) {
++                mListener.onImageSwitch(mCurrentImage);
++            }
++            beginScroll(getScrollX(), 0, disX, 0, SCROLL_NEXT);
++        }
++    }
++
++    /**
++     * 滚动到上一张图片。
++     */
++    public void scrollToPrevious() {
++        if (mScroller.isFinished()) {
++            int disX = -mImageWidth - getScrollX();
++            checkImageSwitchBorder(SCROLL_PREVIOUS);
++            if (mListener != null) {
++                mListener.onImageSwitch(mCurrentImage);
++            }
++            beginScroll(getScrollX(), 0, disX, 0, SCROLL_PREVIOUS);
++        }
++    }
++
++    /**
++     * 滚动回原图片。
++     */
++    public void scrollBack() {
++        if (mScroller.isFinished()) {
++            beginScroll(getScrollX(), 0, -getScrollX(), 0, SCROLL_BACK);
++        }
++    }
++
++    /**
++     * 回收所有图片对象，释放内存。
++     */
++    public void clear() {
++        for (int i = 0; i < mCount; i++) {
++            Image3DView childView = (Image3DView) getChildAt(i);
++            childView.recycleBitmap();
++        }
++    }
++
++    /**
++     * 让控件中的所有图片开始滚动。
++     */
++    private void beginScroll(int startX, int startY, int dx, int dy,
++                             final int action) {
++        int duration = (int) (700f / mImageWidth * Math.abs(dx));
++        mScroller.startScroll(startX, startY, dx, dy, duration);
++        invalidate();
++        handler.postDelayed(new Runnable() {
++            @Override
++            public void run() {
++                if (action == SCROLL_NEXT || action == SCROLL_PREVIOUS) {
++                    forceToRelayout = true;
++                    requestLayout();
++                }
++            }
++        }, duration);
++    }
++
++    /**
++     * 根据当前图片的下标和传入的item参数，来判断item位置上应该显示哪张图片。
++     *
++     * @param item
++     *            取值范围是1-5
++     * @return 对应item位置上应该显示哪张图片。
++     */
++    private int getIndexForItem(int item) {
++        int index = -1;
++        index = mCurrentImage + item - 3;
++        while (index < 0) {
++            index = index + mCount;
++        }
++        while (index > mCount - 1) {
++            index = index - mCount;
++        }
++        return index;
++    }
++
++    /**
++     * 刷新所有图片的显示状态，包括当前的旋转角度。
++     */
++    private void refreshImageShowing() {
++        for (int i = 0; i < mItems.length; i++) {
++            Image3DView childView = (Image3DView) getChildAt(mItems[i]);
++            childView.setRotateData(i, getScrollX());
++            childView.invalidate();
++        }
++    }
++
++    /**
++     * 检查图片的边界，防止图片的下标超出规定范围。
++     */
++    private void checkImageSwitchBorder(int action) {
++        if (action == SCROLL_NEXT && ++mCurrentImage >= mCount) {
++            mCurrentImage = 0;
++        } else if (action == SCROLL_PREVIOUS && --mCurrentImage < 0) {
++            mCurrentImage = mCount - 1;
++        }
++    }
++
++    /**
++     * 判断是否应该滚动到下一张图片。
++     */
++    private boolean shouldScrollToNext(int velocityX) {
++        return velocityX < -SNAP_VELOCITY || getScrollX() > mImageWidth / 2;
++    }
++
++    /**
++     * 判断是否应该滚动到上一张图片。
++     */
++    private boolean shouldScrollToPrevious(int velocityX) {
++        return velocityX > SNAP_VELOCITY || getScrollX() < -mImageWidth / 2;
++    }
++
++    /**
++     * 图片滚动的监听器
++     */
++    public interface OnImageSwitchListener {
++
++        /**
++         * 当图片滚动时会回调此方法
++         *
++         * @param currentImage
++         *            当前图片的坐标
++         */
++        void onImageSwitch(int currentImage);
++
++    }
++}
+Index: app/src/main/res/menu/menu_text.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/menu/menu_text.xml	(revision )
++++ app/src/main/res/menu/menu_text.xml	(revision )
+@@ -0,0 +1,7 @@
++<menu xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    tools:context="com.example.jim.myapplication.view.TextActivity">
++    <item android:id="@+id/action_settings" android:title="@string/action_settings"
++        android:orderInCategory="100" app:showAsAction="never" />
++</menu>
+Index: app/src/main/res/layout/view_more.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/view_more.xml	(revision )
++++ app/src/main/res/layout/view_more.xml	(revision )
+@@ -0,0 +1,18 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="horizontal"
++    android:layout_width="match_parent"
++    android:layout_height="56dp"
++    android:theme="@style/nLiveoDrawer"
++
++    android:gravity="center">
++    <ProgressBar
++        android:layout_width="32dp"
++        android:layout_height="32dp"
++        android:indeterminate="false"/>
++    <TextView
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:text="更多加载中……"/>
++
++</LinearLayout>
+\ No newline at end of file
+Index: app/src/main/res/drawable/photo_gallery_pressed.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_gallery_pressed.xml	(revision )
++++ app/src/main/res/drawable/photo_gallery_pressed.xml	(revision )
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle" >
++
++    <gradient
++        android:angle="90"
++        android:endColor="#CACACB"
++        android:startColor="#CACACB" />
++    <!--
++    <stroke
++        android:dashGap="2dp"
++        android:dashWidth="2dp"
++        android:width="2dp"
++        android:color="#00000000" >
++    </stroke>
++		描边
++
++
++    -->
++
++    <corners
++        android:bottomLeftRadius="0dp"
++        android:bottomRightRadius="0dp"
++        android:topLeftRadius="5dp"
++        android:topRightRadius="5dp" />
++
++</shape>
+\ No newline at end of file
+Index: .idea/misc.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- .idea/misc.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ .idea/misc.xml	(revision )
+@@ -3,6 +3,30 @@
+   <component name="EntryPointsManager">
+     <entry_points version="2.0" />
+   </component>
++  <component name="NullableNotNullManager">
++    <option name="myDefaultNullable" value="android.support.annotation.Nullable" />
++    <option name="myDefaultNotNull" value="android.support.annotation.NonNull" />
++    <option name="myNullables">
++      <value>
++        <list size="4">
++          <item index="0" class="java.lang.String" itemvalue="org.jetbrains.annotations.Nullable" />
++          <item index="1" class="java.lang.String" itemvalue="javax.annotation.Nullable" />
++          <item index="2" class="java.lang.String" itemvalue="edu.umd.cs.findbugs.annotations.Nullable" />
++          <item index="3" class="java.lang.String" itemvalue="android.support.annotation.Nullable" />
++        </list>
++      </value>
++    </option>
++    <option name="myNotNulls">
++      <value>
++        <list size="4">
++          <item index="0" class="java.lang.String" itemvalue="org.jetbrains.annotations.NotNull" />
++          <item index="1" class="java.lang.String" itemvalue="javax.annotation.Nonnull" />
++          <item index="2" class="java.lang.String" itemvalue="edu.umd.cs.findbugs.annotations.NonNull" />
++          <item index="3" class="java.lang.String" itemvalue="android.support.annotation.NonNull" />
++        </list>
++      </value>
++    </option>
++  </component>
+   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
+     <OptionsSetting value="true" id="Add" />
+     <OptionsSetting value="true" id="Remove" />
+\ No newline at end of file
+Index: app/src/main/res/layout/view_nomore.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/view_nomore.xml	(revision )
++++ app/src/main/res/layout/view_nomore.xml	(revision )
+@@ -0,0 +1,12 @@
++<?xml version="1.0" encoding="utf-8"?>
++<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    android:orientation="horizontal"
++    android:layout_width="match_parent"
++    android:theme="@style/nLiveoDrawer"
++    android:layout_height="48dp">
++    <TextView
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        android:gravity="center"
++        android:text="(*￣ω￣) 没有更多了"/>
++</LinearLayout>
+\ No newline at end of file
+Index: app/src/main/res/drawable/photo_camera_pressed.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_camera_pressed.xml	(revision )
++++ app/src/main/res/drawable/photo_camera_pressed.xml	(revision )
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle" >
++
++    <gradient
++        android:angle="90"
++        android:endColor="#CACACB"
++        android:startColor="#CACACB" />
++    <!--
++    <stroke
++        android:dashGap="2dp"
++        android:dashWidth="2dp"
++        android:width="2dp"
++        android:color="#00000000" >
++    </stroke>
++		描边
++
++
++    -->
++
++    <corners
++        android:bottomLeftRadius="5dp"
++        android:bottomRightRadius="5dp"
++        android:topLeftRadius="0dp"
++        android:topRightRadius="0dp" />
++
++</shape>
+\ No newline at end of file
+Index: app/src/main/java/com/example/jim/myapplication/model/Organization.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/java/com/example/jim/myapplication/model/Organization.java	(revision )
++++ app/src/main/java/com/example/jim/myapplication/model/Organization.java	(revision )
+@@ -0,0 +1,108 @@
++package com.example.jim.myapplication.model;
++
++import java.io.Serializable;
++
++import cn.bmob.v3.BmobObject;
++import cn.bmob.v3.datatype.BmobFile;
++
++/**
++ * Created by jim on 2015/8/21.
++ */
++public class Organization extends BmobObject implements Serializable {
++    private String baseIntro;
++    private String specificIntro;
++    private String orgName;
++    private MyInfo user;
++    private int clickCount;
++    private Boolean passExam;
++    private BmobFile orgPic;
++    private Boolean isShow;
++    private String uri;
++
++    public Organization() {
++    }
++
++    public Organization(int clickCount, String orgName, MyInfo user, Boolean passExam) {
++        this.clickCount = clickCount;
++        this.orgName = orgName;
++        this.user = user;
++        this.passExam = passExam;
++    }
++
++    public String getUri() {
++        return uri;
++    }
++
++    public void setUri(String uri) {
++        this.uri = uri;
++    }
++
++    public Boolean getIsShow() {
++        return isShow;
++    }
++
++    public void setIsShow(Boolean isShow) {
++        this.isShow = isShow;
++    }
++
++    public String getBaseIntro() {
++        return baseIntro;
++    }
++
++    public void setBaseIntro(String baseIntro) {
++        this.baseIntro = baseIntro;
++    }
++
++    public String getSpecificIntro() {
++        return specificIntro;
++    }
++
++    public void setSpecificIntro(String specificIntro) {
++        this.specificIntro = specificIntro;
++    }
++
++    public BmobFile getOrgPic() {
++        return orgPic;
++    }
++
++    public void setOrgPic(BmobFile orgPic) {
++        this.orgPic = orgPic;
++    }
++
++    public Boolean getPassExam() {
++        return passExam;
++    }
++
++    public void setPassExam(Boolean passExam) {
++        this.passExam = passExam;
++    }
++
++    public int getClickCount() {
++        return clickCount;
++    }
++
++    public void setClickCount(int clickCount) {
++        this.clickCount = clickCount;
++    }
++
++    public String getOrgName() {
++        return orgName;
++    }
++
++    public void setOrgName(String orgName) {
++        this.orgName = orgName;
++    }
++
++    public MyInfo getUser() {
++        return user;
++    }
++
++    public void setUser(MyInfo user) {
++        this.user = user;
++    }
++
++    public String toString(){
++        return orgName + " " + baseIntro;
++    }
++
++}
+Index: app/src/main/res/layout/fragment_main.xml
+===================================================================
+--- app/src/main/res/layout/fragment_main.xml	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ app/src/main/res/layout/activity_my_org.xml	(revision )
+@@ -1,12 +1,59 @@
+ <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+-    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+-    android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
+-    android:paddingRight="@dimen/activity_horizontal_margin"
+-    android:paddingTop="@dimen/activity_vertical_margin"
+-    android:paddingBottom="@dimen/activity_vertical_margin"
+-    tools:context="com.example.jim.myapplication.MainActivity$PlaceholderFragment">
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    tools:context="com.example.jim.myapplication.view.MyOrgActivity">
++    <ImageView
++        android:id="@+id/org_pic"
++        android:layout_width="100dp"
++        android:layout_height="100dp" />
+ 
+-    <TextView android:id="@+id/section_label" android:layout_width="wrap_content"
++    <com.rengwuxian.materialedittext.MaterialEditText
++        android:id="@+id/base_intro"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_below="@+id/org_pic"
++        android:hint="简介"
++        app:met_floatingLabel="normal"
++        />
++
++    <com.rengwuxian.materialedittext.MaterialEditText
++        android:id="@+id/specific_intro"
++        android:layout_width="match_parent"
++        android:layout_height="wrap_content"
++        android:layout_below="@+id/base_intro"
++        android:hint="详细介绍"
++        app:met_floatingLabel="normal"
++        />
++
++    <Button
++        android:id="@+id/more_pic"
++        android:text="图片"
++        android:layout_below="@+id/specific_intro"
++        android:layout_width="wrap_content"
+         android:layout_height="wrap_content" />
+ 
++    <TextView
++        android:id="@+id/text"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content"
++        android:layout_below="@+id/more_pic"
++        android:text="是否已准备好公开"/>
++    <CheckBox
++        android:id="@+id/is_show"
++        android:layout_alignTop="@+id/text"
++        android:layout_below="@+id/more_pic"
++        android:layout_toRightOf="@id/text"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content" />
++
++    <Button
++        android:id="@+id/submit"
++        android:text="提交"
++        android:layout_below="@+id/is_show"
++        android:layout_marginBottom="10dp"
++        android:layout_centerHorizontal="true"
++        android:layout_width="wrap_content"
++        android:layout_height="wrap_content" />
+ </RelativeLayout>
+Index: app/src/main/res/layout/activity_show.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/layout/activity_show.xml	(revision )
++++ app/src/main/res/layout/activity_show.xml	(revision )
+@@ -0,0 +1,63 @@
++<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
++    xmlns:app="http://schemas.android.com/apk/res-auto"
++    xmlns:tools="http://schemas.android.com/tools"
++    android:layout_width="match_parent"
++    android:layout_height="match_parent"
++    tools:context="com.example.jim.myapplication.view.ShowActivity">
++
++    <FrameLayout
++        android:id="@+id/container"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent">
++
++        <android.support.design.widget.CoordinatorLayout
++            android:layout_width="match_parent"
++            android:layout_height="match_parent"
++            android:fitsSystemWindows="true">
++
++            <android.support.design.widget.AppBarLayout
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content">
++
++                <android.support.design.widget.CollapsingToolbarLayout
++                    android:id="@+id/ctl"
++                    android:layout_width="match_parent"
++                    android:layout_height="wrap_content"
++                    app:theme="@style/Theme.AppCompat"
++                    app:contentScrim="?attr/colorPrimary"
++                    app:layout_scrollFlags="scroll|exitUntilCollapsed">
++
++                    <ImageView
++                        android:id="@+id/back_image"
++                        android:layout_width="match_parent"
++                        android:layout_height="200dp"
++                        android:scaleType="fitXY"
++                        android:src="@drawable/banner"
++                        app:layout_collapseMode="parallax" />
++
++                    <android.support.v7.widget.Toolbar
++                        android:id="@+id/tb"
++                        android:layout_width="match_parent"
++                        android:layout_height="?attr/actionBarSize" />
++
++                </android.support.design.widget.CollapsingToolbarLayout>
++            </android.support.design.widget.AppBarLayout>
++            <android.support.v7.widget.RecyclerView
++                android:id="@+id/rv"
++                android:layout_width="match_parent"
++                android:layout_height="wrap_content"
++                app:layout_behavior="@string/appbar_scrolling_view_behavior" >
++            </android.support.v7.widget.RecyclerView>
++        </android.support.design.widget.CoordinatorLayout>
++
++    </FrameLayout>
++
++    <android.support.v7.widget.RecyclerView
++        android:id="@+id/pics"
++        android:layout_width="match_parent"
++        android:layout_height="match_parent"
++        android:layout_gravity="end"
++        android:background="@drawable/sun_snow" >
++    </android.support.v7.widget.RecyclerView>
++
++</android.support.v4.widget.DrawerLayout>
+Index: app/src/main/res/drawable/photo_gallery_normal.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- app/src/main/res/drawable/photo_gallery_normal.xml	(revision )
++++ app/src/main/res/drawable/photo_gallery_normal.xml	(revision )
+@@ -0,0 +1,27 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<shape xmlns:android="http://schemas.android.com/apk/res/android"
++    android:shape="rectangle" >
++
++    <gradient
++        android:angle="90"
++        android:endColor="#EBEBEB"
++        android:startColor="#EBEBEB" />
++    <!--
++    <stroke
++        android:dashGap="2dp"
++        android:dashWidth="2dp"
++        android:width="2dp"
++        android:color="#FF00ff00" >
++    </stroke>
++		描边
++
++
++    -->
++
++    <corners
++        android:bottomLeftRadius="0dp"
++        android:bottomRightRadius="0dp"
++        android:topLeftRadius="5dp"
++        android:topRightRadius="5dp" />
++
++</shape>
+\ No newline at end of file
+Index: settings.gradle
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- settings.gradle	(revision 015881c9e4c04b4bcae1a2b8a47c39b3d74b6c9c)
++++ settings.gradle	(revision )
+@@ -1,1 +1,1 @@
+-include ':app'
++include ':app', ':mylibrary'

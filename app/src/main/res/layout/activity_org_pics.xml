@@ -1,0 +1,22 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.jim.myapplication.view.OrgPicsActivity">
+
+    <Button
+        android:id="@+id/submit"
+        android:text="提交"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+    <GridView
+        android:id="@+id/org_pics"
+        android:layout_below="@+id/submit"
+        android:numColumns="3"
+        android:horizontalSpacing="5dp"
+        android:verticalSpacing="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"></GridView>
+
+</RelativeLayout>

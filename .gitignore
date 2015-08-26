@@ -5,3 +5,5 @@
 .DS_Store
 /build
 /captures
+/app/signing.properties
+/app/src/main/java/com/example/jim/myapplication/Config/App.java
